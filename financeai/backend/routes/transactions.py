@@ -12,8 +12,10 @@ async def list_transactions(
     status: str | None = None,
     month: int | None = None,
     year: int | None = None,
+    page: int = 1,
+    per_page: int = 20,
 ):
-    query = supabase.table("transactions").select("*")
+    query = supabase.table("transactions").select("*", count="exact")
     if type:
         query = query.eq("type", type)
     if category:
@@ -26,8 +28,9 @@ async def list_transactions(
         end_year = year if month < 12 else year + 1
         end = f"{end_year}-{end_month:02d}-01"
         query = query.gte("due_date", start).lt("due_date", end)
-    result = query.order("due_date", desc=True).execute()
-    return result.data
+    offset = (page - 1) * per_page
+    result = query.order("due_date", desc=True).range(offset, offset + per_page - 1).execute()
+    return {"data": result.data, "total": result.count, "page": page, "per_page": per_page}
 
 
 @router.get("/{transaction_id}")

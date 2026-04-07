@@ -9,14 +9,17 @@ router = APIRouter(prefix="/api/debts", tags=["debts"])
 async def list_debts(
     status: str | None = None,
     category: str | None = None,
+    page: int = 1,
+    per_page: int = 20,
 ):
-    query = supabase.table("debts").select("*")
+    query = supabase.table("debts").select("*", count="exact")
     if status:
         query = query.eq("status", status)
     if category:
         query = query.eq("category", category)
-    result = query.order("created_at", desc=True).execute()
-    return result.data
+    offset = (page - 1) * per_page
+    result = query.order("created_at", desc=True).range(offset, offset + per_page - 1).execute()
+    return {"data": result.data, "total": result.count, "page": page, "per_page": per_page}
 
 
 @router.get("/{debt_id}")
