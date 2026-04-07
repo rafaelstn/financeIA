@@ -12,6 +12,10 @@ app.add_middleware(
 )
 
 
+from routes.transactions import router as transactions_router
+app.include_router(transactions_router)
+
+
 @app.get("/")
 async def health_check():
     return {"status": "ok", "service": "FinanceAI API"}
