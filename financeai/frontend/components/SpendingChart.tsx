@@ -56,7 +56,7 @@ export default function SpendingChart() {
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`} />
+                <Tooltip formatter={(value) => `R$ ${(value as number).toFixed(2)}`} />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -73,7 +73,7 @@ export default function SpendingChart() {
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis dataKey="name" stroke="#888" />
               <YAxis stroke="#888" />
-              <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`} />
+              <Tooltip formatter={(value) => `R$ ${(value as number).toFixed(2)}`} />
               <Legend />
               <Bar dataKey="receitas" fill="#10b981" />
               <Bar dataKey="despesas" fill="#ef4444" />

@@ -84,7 +84,7 @@ export default function InvestmentsPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Investimentos</h2>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Adicionar</Button></DialogTrigger>
+          <DialogTrigger render={<Button />}><Plus className="h-4 w-4 mr-2" />Adicionar</DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>{editingId ? "Editar" : "Novo"} Investimento</DialogTitle></DialogHeader>
             <div className="space-y-4">

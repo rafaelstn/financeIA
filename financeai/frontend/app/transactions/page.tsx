@@ -104,8 +104,8 @@ export default function TransactionsPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Transacoes</h2>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Adicionar</Button>
+          <DialogTrigger render={<Button />}>
+            <Plus className="h-4 w-4 mr-2" />Adicionar
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -116,13 +116,13 @@ export default function TransactionsPage() {
               <div><Label>Valor</Label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Tipo</Label>
-                  <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                  <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v ?? "" })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="income">Receita</SelectItem><SelectItem value="expense">Despesa</SelectItem></SelectContent>
                   </Select>
                 </div>
                 <div><Label>Categoria</Label>
-                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v ?? "" })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                   </Select>
@@ -130,7 +130,7 @@ export default function TransactionsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Status</Label>
-                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v ?? "" })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="pending">Pendente</SelectItem><SelectItem value="paid">Pago</SelectItem><SelectItem value="overdue">Vencido</SelectItem></SelectContent>
                   </Select>
@@ -146,11 +146,11 @@ export default function TransactionsPage() {
       </div>
 
       <div className="flex gap-4">
-        <Select value={filterType} onValueChange={setFilterType}>
+        <Select value={filterType} onValueChange={(v) => setFilterType(v ?? "all")}>
           <SelectTrigger className="w-40"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Todos</SelectItem><SelectItem value="income">Receitas</SelectItem><SelectItem value="expense">Despesas</SelectItem></SelectContent>
         </Select>
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
+        <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v ?? "all")}>
           <SelectTrigger className="w-40"><SelectValue placeholder="Categoria" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Todas</SelectItem>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
         </Select>

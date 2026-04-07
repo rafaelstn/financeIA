@@ -144,7 +144,7 @@ export default function CreditCardsPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Cartoes de Credito</h2>
         <Dialog open={openCard} onOpenChange={setOpenCard}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Novo Cartao</Button></DialogTrigger>
+          <DialogTrigger render={<Button />}><Plus className="h-4 w-4 mr-2" />Novo Cartao</DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Novo Cartao</DialogTitle></DialogHeader>
             <div className="space-y-4">
