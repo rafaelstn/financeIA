@@ -30,6 +30,9 @@ app.include_router(alerts_router)
 from routes.debts import router as debts_router
 app.include_router(debts_router)
 
+from routes.goals import router as goals_router
+app.include_router(goals_router)
+
 from routes.chat import router as chat_router
 app.include_router(chat_router)
 

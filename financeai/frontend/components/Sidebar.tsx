@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, CreditCard, TrendingUp, Receipt } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, CreditCard, TrendingUp, Receipt, Target } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/credit-cards", label: "Cartoes", icon: CreditCard },
   { href: "/investments", label: "Investimentos", icon: TrendingUp },
   { href: "/debts", label: "Dividas", icon: Receipt },
+  { href: "/goals", label: "Objetivos", icon: Target },
 ];
 
 export default function Sidebar() {

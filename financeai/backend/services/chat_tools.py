@@ -190,6 +190,70 @@ TOOL_DEFINITIONS = [
             },
         },
     },
+    {
+        "name": "create_goal",
+        "description": "Registra um novo objetivo ou meta financeira. Use quando o usuario disser que quer comprar algo, juntar dinheiro para algo, realizar um sonho, etc.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "Nome do objetivo (ex: TV 65\", Viagem Europa)"},
+                "target_amount": {"type": "number", "description": "Valor total necessario"},
+                "category": {
+                    "type": "string",
+                    "enum": ["eletronico", "veiculo", "imovel", "viagem", "educacao", "saude", "lazer", "outros"],
+                    "description": "Categoria do objetivo",
+                },
+                "saved_amount": {"type": "number", "description": "Valor ja guardado (default 0)"},
+                "priority": {
+                    "type": "string",
+                    "enum": ["alta", "media", "baixa"],
+                    "description": "Prioridade do objetivo",
+                },
+                "target_date": {"type": "string", "description": "Data alvo no formato YYYY-MM-DD"},
+                "notes": {"type": "string", "description": "Observacoes opcionais"},
+            },
+            "required": ["name", "target_amount", "category"],
+        },
+    },
+    {
+        "name": "update_goal",
+        "description": "Atualiza um objetivo existente. Use para adicionar valor guardado, mudar prioridade, marcar como concluido, etc.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "goal_id": {"type": "string", "description": "ID do objetivo a atualizar"},
+                "name": {"type": "string"},
+                "target_amount": {"type": "number"},
+                "saved_amount": {"type": "number"},
+                "priority": {"type": "string", "enum": ["alta", "media", "baixa"]},
+                "category": {
+                    "type": "string",
+                    "enum": ["eletronico", "veiculo", "imovel", "viagem", "educacao", "saude", "lazer", "outros"],
+                },
+                "status": {"type": "string", "enum": ["ativa", "pausada", "concluida", "cancelada"]},
+                "target_date": {"type": "string"},
+                "notes": {"type": "string"},
+            },
+            "required": ["goal_id"],
+        },
+    },
+    {
+        "name": "list_goals",
+        "description": "Lista objetivos e metas financeiras com filtros opcionais.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": ["ativa", "pausada", "concluida", "cancelada"],
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": ["alta", "media", "baixa"],
+                },
+            },
+        },
+    },
 ]
 
 
@@ -218,6 +282,12 @@ def execute_tool(name: str, args: dict) -> str:
             return _update_debt(args)
         elif name == "list_debts":
             return _list_debts(args)
+        elif name == "create_goal":
+            return _create_goal(args)
+        elif name == "update_goal":
+            return _update_goal(args)
+        elif name == "list_goals":
+            return _list_goals(args)
         else:
             return json.dumps({"error": f"Tool desconhecida: {name}"})
     except Exception as e:
@@ -393,3 +463,42 @@ def _list_debts(args: dict) -> str:
         query = query.eq("category", args["category"])
     result = query.order("created_at", desc=True).execute()
     return json.dumps({"debts": result.data}, default=str)
+
+
+def _create_goal(args: dict) -> str:
+    data = {
+        "name": args["name"],
+        "target_amount": args["target_amount"],
+        "category": args["category"],
+    }
+    if "saved_amount" in args:
+        data["saved_amount"] = args["saved_amount"]
+    if "priority" in args:
+        data["priority"] = args["priority"]
+    if "target_date" in args:
+        data["target_date"] = args["target_date"]
+    if "notes" in args:
+        data["notes"] = args["notes"]
+
+    result = supabase.table("goals").insert(data).execute()
+    return json.dumps({"success": True, "goal": result.data[0]}, default=str)
+
+
+def _update_goal(args: dict) -> str:
+    gid = args.pop("goal_id")
+    if not args:
+        return json.dumps({"error": "Nenhum campo para atualizar"})
+    result = supabase.table("goals").update(args).eq("id", gid).execute()
+    if not result.data:
+        return json.dumps({"error": "Objetivo nao encontrado"})
+    return json.dumps({"success": True, "goal": result.data[0]}, default=str)
+
+
+def _list_goals(args: dict) -> str:
+    query = supabase.table("goals").select("*")
+    if "status" in args:
+        query = query.eq("status", args["status"])
+    if "priority" in args:
+        query = query.eq("priority", args["priority"])
+    result = query.order("created_at", desc=True).execute()
+    return json.dumps({"goals": result.data}, default=str)

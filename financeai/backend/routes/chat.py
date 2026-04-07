@@ -73,6 +73,16 @@ Quando o usuario pedir para registrar, adicionar, pagar, ou qualquer acao sobre 
 - Sugira o metodo avalanche (pagar primeiro a de maior juros) ou bola de neve (pagar primeiro a menor)
 - Use as ferramentas create_debt, update_debt e list_debts para gerenciar dividas
 
+### Objetivos e Metas
+- Ajude o usuario a priorizar: primeiro quitar dividas de juros altos, depois reserva de emergencia, depois objetivos
+- Calcule quanto precisa guardar por mes para atingir cada meta no prazo
+- Se o usuario quer algo caro mas tem dividas, seja honesto: "Sugiro quitar X primeiro, depois focar na TV"
+- Celebre progresso: "Voce ja tem 40% da meta da TV! Continue assim"
+- Sugira estrategias: separar um valor fixo por mes, vender coisas que nao usa, renda extra
+- Quando um objetivo for concluido, parabenize e sugira o proximo
+- Relacione objetivos com o orcamento: "Se guardar R$ 500/mes, alcanca a meta em 10 meses"
+- Use as ferramentas create_goal, update_goal e list_goals para gerenciar objetivos
+
 ## Regras
 - SEMPRE use as ferramentas quando o usuario pedir uma acao
 - NUNCA invente dados — use apenas o que esta no sistema
@@ -206,6 +216,34 @@ def build_financial_context() -> str:
         f"- Detalhes:\n" + ("\n".join(debt_detail_lines) if debt_detail_lines else "  Nenhuma divida cadastrada")
     )
 
+    # Goals
+    try:
+        all_goals = supabase.table("goals").select("*").execute().data
+    except Exception:
+        all_goals = []
+    active_goals = [g for g in all_goals if g.get("status") == "ativa"]
+    total_target = sum(g["target_amount"] for g in active_goals)
+    total_saved = sum(g["saved_amount"] for g in active_goals)
+    goals_pct = (total_saved / total_target * 100) if total_target > 0 else 0
+    priority_labels = {"alta": "Alta", "media": "Media", "baixa": "Baixa"}
+    goal_detail_lines = []
+    for g in all_goals:
+        prio = priority_labels.get(g["priority"], g["priority"])
+        g_pct = (g["saved_amount"] / g["target_amount"] * 100) if g["target_amount"] > 0 else 0
+        line = f"  - [{g['id'][:8]}] {g['name']} (Prioridade: {prio}): R$ {g['saved_amount']:.2f} / R$ {g['target_amount']:.2f} ({g_pct:.0f}%)"
+        if g.get("target_date"):
+            line += f" - Meta: {g['target_date']}"
+        if g.get("status") != "ativa":
+            status_map = {"pausada": "Pausada", "concluida": "Concluida", "cancelada": "Cancelada"}
+            line += f" [{status_map.get(g['status'], g['status'])}]"
+        goal_detail_lines.append(line)
+    goals_text = (
+        f"- Objetivos ativos: {len(active_goals)}\n"
+        f"- Total necessario: R$ {total_target:.2f}\n"
+        f"- Total guardado: R$ {total_saved:.2f} ({goals_pct:.0f}%)\n"
+        f"- Detalhes dos objetivos:\n" + ("\n".join(goal_detail_lines) if goal_detail_lines else "  Nenhum objetivo cadastrado")
+    )
+
     return f"""Data de hoje: {today.isoformat()}
 Mes atual: {m:02d}/{y}
 
@@ -230,7 +268,10 @@ Mes atual: {m:02d}/{y}
 {invoices_text}
 
 ### Dividas
-{debts_text}"""
+{debts_text}
+
+### Objetivos e Metas
+{goals_text}"""
 
 
 @router.post("/")
