@@ -70,6 +70,7 @@ export default function InvestmentsPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Tem certeza que deseja excluir?")) return;
     await api.delete(`/investments/${id}`);
     load();
   };

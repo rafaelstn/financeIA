@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, X, Send } from "lucide-react";
+import { MessageCircle, X, Send, Trash2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import api from "@/lib/api";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  timestamp: string;
 }
 
 export default function Chat() {
@@ -18,11 +20,13 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const now = () => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       api.get("/chat/history").then((res) => {
         if (res.data.length > 0) {
-          setMessages(res.data.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })));
+          setMessages(res.data.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content, timestamp: now() })));
         }
       });
     }
@@ -34,7 +38,7 @@ export default function Chat() {
 
   const send = async () => {
     if (!input.trim() || loading) return;
-    const userMsg: Message = { role: "user", content: input.trim() };
+    const userMsg: Message = { role: "user", content: input.trim(), timestamp: now() };
     const updated = [...messages, userMsg];
     setMessages(updated);
     setInput("");
@@ -42,9 +46,9 @@ export default function Chat() {
 
     try {
       const res = await api.post("/chat", { message: userMsg.content, history: messages });
-      setMessages([...updated, { role: "assistant", content: res.data.response }]);
+      setMessages([...updated, { role: "assistant", content: res.data.response, timestamp: now() }]);
     } catch {
-      setMessages([...updated, { role: "assistant", content: "Erro ao conectar com a IA. Tente novamente." }]);
+      setMessages([...updated, { role: "assistant", content: "Erro ao conectar com a IA. Tente novamente.", timestamp: now() }]);
     } finally {
       setLoading(false);
     }
@@ -65,9 +69,14 @@ export default function Chat() {
         <div className="fixed bottom-0 right-0 w-[400px] h-[600px] bg-card border-l border-t border-border flex flex-col z-50 shadow-xl">
           <div className="flex items-center justify-between p-4 border-b border-border">
             <h3 className="font-semibold">Assistente Financeiro</h3>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" onClick={() => setMessages([])}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -77,7 +86,7 @@ export default function Chat() {
               </p>
             )}
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div key={i} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
                 <div
                   className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
                     msg.role === "user"
@@ -85,8 +94,15 @@ export default function Chat() {
                       : "bg-muted text-foreground"
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === "assistant" ? (
+                    <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>ul]:m-0 [&>ol]:m-0">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
+                <span className="text-xs text-muted-foreground mt-1">{msg.timestamp}</span>
               </div>
             ))}
             {loading && (

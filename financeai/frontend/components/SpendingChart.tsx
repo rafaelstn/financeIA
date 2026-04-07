@@ -39,6 +39,23 @@ export default function SpendingChart() {
     });
   }, []);
 
+  const isLoading = categoryData.length === 0 && yearlyData.length === 0;
+
+  if (isLoading) return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {[...Array(2)].map((_, i) => (
+        <Card key={i}>
+          <CardHeader>
+            <div className="h-4 w-40 bg-muted animate-pulse rounded" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] bg-muted animate-pulse rounded" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>

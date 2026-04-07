@@ -18,9 +18,29 @@ interface Alert {
 export default function AlertsPanel() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    api.get("/alerts").then((res) => setAlerts(res.data));
+    api.get("/alerts").then((res) => setAlerts(res.data)).finally(() => setLoading(false));
   }, []);
+
+  if (loading) return (
+    <Card>
+      <CardHeader>
+        <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="h-5 w-16 bg-muted animate-pulse rounded" />
+              <div className="h-4 w-full bg-muted animate-pulse rounded" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <Card>

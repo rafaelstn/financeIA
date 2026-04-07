@@ -93,7 +93,7 @@ export default function DebtsPage() {
     const params: Record<string, string> = {};
     if (filterStatus !== "all") params.status = filterStatus;
     if (filterCategory !== "all") params.category = filterCategory;
-    api.get("/debts", { params }).then((res) => setDebts(res.data));
+    api.get("/debts", { params }).then((res) => setDebts(res.data.data || res.data));
   };
 
   useEffect(() => {
@@ -152,6 +152,7 @@ export default function DebtsPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Tem certeza que deseja excluir?")) return;
     await api.delete(`/debts/${id}`);
     load();
   };

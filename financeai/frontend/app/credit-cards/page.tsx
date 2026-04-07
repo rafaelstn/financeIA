@@ -100,6 +100,7 @@ export default function CreditCardsPage() {
   };
 
   const deleteCard = async (id: string) => {
+    if (!window.confirm("Tem certeza que deseja excluir este cartao?")) return;
     await api.delete(`/credit-cards/${id}`);
     loadCards();
   };
