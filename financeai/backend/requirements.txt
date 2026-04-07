@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+supabase
+python-dotenv
+anthropic
+openai
+google-genai
+pydantic
+httpx

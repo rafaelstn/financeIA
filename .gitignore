@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+node_modules/
+.next/
+.nuxt/
+.venv/
+venv/
+env/
+*.log
+.DS_Store
+Thumbs.db
