@@ -17,6 +17,7 @@ Voce pode EXECUTAR ACOES no sistema financeiro do usuario:
 - Registrar receitas e despesas
 - Marcar contas como pagas
 - Cadastrar investimentos
+- Registrar e gerenciar dividas
 - Consultar extratos e resumos
 - Verificar alertas de vencimento
 
@@ -62,6 +63,15 @@ Quando o usuario pedir para registrar, adicionar, pagar, ou qualquer acao sobre 
 - Use numeros concretos dos dados do usuario
 - Formate valores sempre como R$ X.XXX,XX
 - Use emojis com moderacao para alertas importantes
+
+### Dividas e Negociacao
+- Se o usuario tem dividas, priorize a quitacao: primeiro cheque especial e cartao (juros mais altos), depois emprestimos
+- Sugira negociacao direta com o credor — descontos de 40-80% sao comuns para dividas antigas
+- Explique sobre prescricao (5 anos para dividas bancarias)
+- Para dividas em acordo, acompanhe o progresso e motive
+- Nunca julgue o usuario por ter dividas — seja empatico e pratico
+- Sugira o metodo avalanche (pagar primeiro a de maior juros) ou bola de neve (pagar primeiro a menor)
+- Use as ferramentas create_debt, update_debt e list_debts para gerenciar dividas
 
 ## Regras
 - SEMPRE use as ferramentas quando o usuario pedir uma acao
@@ -163,6 +173,39 @@ def build_financial_context() -> str:
         invoice_lines.append(f"  - {card_name}: R$ {inv['total_amount']:.2f} | Vence: {inv.get('due_date', 'N/A')} | Status: {inv['status']}")
     invoices_text = "\n".join(invoice_lines) if invoice_lines else "  Nenhuma fatura aberta"
 
+    # Debts
+    try:
+        all_debts = supabase.table("debts").select("*").execute().data
+    except Exception:
+        all_debts = []
+    active_debts = [d for d in all_debts if d.get("status") in ("ativa", "negociando")]
+    agreement_debts = [d for d in all_debts if d.get("status") == "acordo"]
+    settled_debts = [d for d in all_debts if d.get("status") == "quitada"]
+    debt_total = sum(d["current_amount"] for d in active_debts)
+    monthly_agreement = sum(d.get("monthly_payment") or 0 for d in agreement_debts)
+    cat_labels = {
+        "cartao": "Cartao", "emprestimo": "Emprestimo", "financiamento": "Financiamento",
+        "cheque_especial": "Cheque Especial", "conta_consumo": "Conta de Consumo", "outros": "Outros",
+    }
+    status_labels = {
+        "ativa": "Ativa", "negociando": "Negociando", "acordo": "Em acordo",
+        "quitada": "Quitada", "prescrita": "Prescrita",
+    }
+    debt_detail_lines = []
+    for d in all_debts:
+        cat = cat_labels.get(d["category"], d["category"])
+        st = status_labels.get(d["status"], d["status"])
+        line = f"  - [{d['id'][:8]}] {d['creditor']} | {cat} | R$ {d['current_amount']:.2f} | {st}"
+        if d.get("monthly_payment"):
+            line += f" | Parcela: R$ {d['monthly_payment']:.2f}"
+        debt_detail_lines.append(line)
+    debts_text = (
+        f"- Dividas ativas: {len(active_debts)} (total: R$ {debt_total:.2f})\n"
+        f"- Dividas em acordo: {len(agreement_debts)} (parcela mensal total: R$ {monthly_agreement:.2f})\n"
+        f"- Dividas quitadas: {len(settled_debts)}\n"
+        f"- Detalhes:\n" + ("\n".join(debt_detail_lines) if debt_detail_lines else "  Nenhuma divida cadastrada")
+    )
+
     return f"""Data de hoje: {today.isoformat()}
 Mes atual: {m:02d}/{y}
 
@@ -184,7 +227,10 @@ Mes atual: {m:02d}/{y}
 {inv_text}
 
 ### Faturas de Cartao
-{invoices_text}"""
+{invoices_text}
+
+### Dividas
+{debts_text}"""
 
 
 @router.post("/")

@@ -127,6 +127,69 @@ TOOL_DEFINITIONS = [
             "properties": {},
         },
     },
+    {
+        "name": "create_debt",
+        "description": "Registra uma divida antiga ou atual. Use quando o usuario mencionar dividas, debitos pendentes, emprestimos nao pagos, etc.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "creditor": {"type": "string", "description": "Nome do credor (banco, loja, pessoa)"},
+                "original_amount": {"type": "number", "description": "Valor original da divida"},
+                "current_amount": {"type": "number", "description": "Valor atualizado com juros/multa"},
+                "category": {
+                    "type": "string",
+                    "enum": ["cartao", "emprestimo", "financiamento", "cheque_especial", "conta_consumo", "outros"],
+                },
+                "status": {
+                    "type": "string",
+                    "enum": ["ativa", "negociando", "acordo", "quitada", "prescrita"],
+                    "description": "ativa=nao paga, negociando=em negociacao, acordo=pagando acordo, quitada=paga, prescrita=mais de 5 anos",
+                },
+                "origin_date": {"type": "string", "description": "Data de origem da divida YYYY-MM-DD"},
+                "is_paying": {"type": "boolean", "description": "Se esta pagando atualmente"},
+                "monthly_payment": {"type": "number", "description": "Valor da parcela mensal (se em acordo)"},
+                "notes": {"type": "string"},
+            },
+            "required": ["creditor", "original_amount", "current_amount", "category", "origin_date"],
+        },
+    },
+    {
+        "name": "update_debt",
+        "description": "Atualiza uma divida existente. Use para mudar status, registrar pagamento, atualizar valor, etc.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "debt_id": {"type": "string"},
+                "creditor": {"type": "string"},
+                "original_amount": {"type": "number"},
+                "current_amount": {"type": "number"},
+                "category": {"type": "string"},
+                "status": {
+                    "type": "string",
+                    "enum": ["ativa", "negociando", "acordo", "quitada", "prescrita"],
+                },
+                "is_paying": {"type": "boolean"},
+                "monthly_payment": {"type": "number"},
+                "paid_installments": {"type": "integer"},
+                "notes": {"type": "string"},
+            },
+            "required": ["debt_id"],
+        },
+    },
+    {
+        "name": "list_debts",
+        "description": "Lista todas as dividas com filtros opcionais.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": ["ativa", "negociando", "acordo", "quitada", "prescrita"],
+                },
+                "category": {"type": "string"},
+            },
+        },
+    },
 ]
 
 
@@ -149,6 +212,12 @@ def execute_tool(name: str, args: dict) -> str:
             return _get_monthly_summary(args)
         elif name == "get_alerts":
             return _get_alerts(args)
+        elif name == "create_debt":
+            return _create_debt(args)
+        elif name == "update_debt":
+            return _update_debt(args)
+        elif name == "list_debts":
+            return _list_debts(args)
         else:
             return json.dumps({"error": f"Tool desconhecida: {name}"})
     except Exception as e:
@@ -283,3 +352,44 @@ def _get_monthly_summary(args: dict) -> str:
 def _get_alerts(_args: dict) -> str:
     alerts = get_active_alerts()
     return json.dumps({"alerts": alerts}, default=str)
+
+
+def _create_debt(args: dict) -> str:
+    data = {
+        "creditor": args["creditor"],
+        "original_amount": args["original_amount"],
+        "current_amount": args["current_amount"],
+        "category": args["category"],
+        "origin_date": args["origin_date"],
+    }
+    if "status" in args:
+        data["status"] = args["status"]
+    if "is_paying" in args:
+        data["is_paying"] = args["is_paying"]
+    if "monthly_payment" in args:
+        data["monthly_payment"] = args["monthly_payment"]
+    if "notes" in args:
+        data["notes"] = args["notes"]
+
+    result = supabase.table("debts").insert(data).execute()
+    return json.dumps({"success": True, "debt": result.data[0]}, default=str)
+
+
+def _update_debt(args: dict) -> str:
+    did = args.pop("debt_id")
+    if not args:
+        return json.dumps({"error": "Nenhum campo para atualizar"})
+    result = supabase.table("debts").update(args).eq("id", did).execute()
+    if not result.data:
+        return json.dumps({"error": "Divida nao encontrada"})
+    return json.dumps({"success": True, "debt": result.data[0]}, default=str)
+
+
+def _list_debts(args: dict) -> str:
+    query = supabase.table("debts").select("*")
+    if "status" in args:
+        query = query.eq("status", args["status"])
+    if "category" in args:
+        query = query.eq("category", args["category"])
+    result = query.order("created_at", desc=True).execute()
+    return json.dumps({"debts": result.data}, default=str)
