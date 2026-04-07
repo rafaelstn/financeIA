@@ -270,10 +270,12 @@ TOOL_DEFINITIONS = [
                 },
                 "frequency": {"type": "string", "enum": ["monthly", "weekly", "yearly"], "description": "Frequencia: monthly=mensal, weekly=semanal, yearly=anual"},
                 "day_of_month": {"type": "integer", "description": "Dia do mes para vencimento"},
-                "next_due_date": {"type": "string", "description": "Proxima data de vencimento YYYY-MM-DD"},
+                "next_due_date": {"type": "string", "description": "Proxima data de vencimento YYYY-MM-DD (opcional se use_business_day=true)"},
+                "use_business_day": {"type": "boolean", "description": "Se true, usa dia util ao inves de dia fixo. Ex: 5o dia util do mes"},
+                "business_day_number": {"type": "integer", "description": "Numero do dia util (ex: 5 = quinto dia util do mes)"},
                 "notes": {"type": "string", "description": "Observacoes opcionais"},
             },
-            "required": ["description", "amount", "type", "category", "next_due_date"],
+            "required": ["description", "amount", "type", "category"],
         },
     },
     {
@@ -574,7 +576,6 @@ def _create_recurring(args: dict) -> str:
         "amount": args["amount"],
         "type": args["type"],
         "category": args["category"],
-        "next_due_date": args["next_due_date"],
     }
     if "frequency" in args:
         data["frequency"] = args["frequency"]
@@ -582,6 +583,26 @@ def _create_recurring(args: dict) -> str:
         data["day_of_month"] = args["day_of_month"]
     if "notes" in args:
         data["notes"] = args["notes"]
+    if "use_business_day" in args:
+        data["use_business_day"] = args["use_business_day"]
+    if "business_day_number" in args:
+        data["business_day_number"] = args["business_day_number"]
+
+    # Auto-calculate next_due_date for business day mode
+    if data.get("use_business_day") and data.get("business_day_number"):
+        from routes.recurring import get_nth_business_day
+
+        today = date.today()
+        bd = get_nth_business_day(today.year, today.month, data["business_day_number"])
+        if bd <= today:
+            next_m = today.month + 1 if today.month < 12 else 1
+            next_y = today.year if today.month < 12 else today.year + 1
+            bd = get_nth_business_day(next_y, next_m, data["business_day_number"])
+        data["next_due_date"] = str(bd)
+    elif "next_due_date" in args:
+        data["next_due_date"] = args["next_due_date"]
+    else:
+        data["next_due_date"] = str(date.today())
 
     result = supabase.table("recurring_transactions").insert(data).execute()
     return json.dumps({"success": True, "recurring": result.data[0]}, default=str)

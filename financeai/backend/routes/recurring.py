@@ -2,9 +2,26 @@ from fastapi import APIRouter, HTTPException
 from database import supabase
 from models.recurring import RecurringCreate, RecurringUpdate
 from datetime import date, timedelta
+from calendar import monthrange
 from dateutil.relativedelta import relativedelta
 
 router = APIRouter(prefix="/api/recurring", tags=["recurring"])
+
+
+def get_nth_business_day(year: int, month: int, n: int) -> date:
+    """Returns the Nth business day (weekday Mon-Fri) of the given month."""
+    count = 0
+    _, last_day = monthrange(year, month)
+    last_bd = None
+    for day in range(1, last_day + 1):
+        d = date(year, month, day)
+        if d.weekday() < 5:  # Monday=0 to Friday=4
+            count += 1
+            last_bd = d
+            if count == n:
+                return d
+    # If N exceeds business days in month, return last business day
+    return last_bd
 
 
 @router.get("/")
@@ -24,8 +41,20 @@ async def list_recurring(
 @router.post("/", status_code=201)
 async def create_recurring(item: RecurringCreate):
     data = item.model_dump(exclude_none=True)
-    if "next_due_date" in data:
+
+    # Auto-calculate next_due_date when using business day
+    if data.get("use_business_day") and data.get("business_day_number"):
+        today = date.today()
+        bd = get_nth_business_day(today.year, today.month, data["business_day_number"])
+        if bd <= today:
+            # Already passed this month, use next month
+            next_m = today.month + 1 if today.month < 12 else 1
+            next_y = today.year if today.month < 12 else today.year + 1
+            bd = get_nth_business_day(next_y, next_m, data["business_day_number"])
+        data["next_due_date"] = str(bd)
+    elif "next_due_date" in data:
         data["next_due_date"] = str(data["next_due_date"])
+
     result = supabase.table("recurring_transactions").insert(data).execute()
     return result.data[0]
 
@@ -35,8 +64,19 @@ async def update_recurring(item_id: str, item: RecurringUpdate):
     data = item.model_dump(exclude_none=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
-    if "next_due_date" in data:
+
+    # Auto-calculate next_due_date when switching to business day mode
+    if data.get("use_business_day") and data.get("business_day_number"):
+        today = date.today()
+        bd = get_nth_business_day(today.year, today.month, data["business_day_number"])
+        if bd <= today:
+            next_m = today.month + 1 if today.month < 12 else 1
+            next_y = today.year if today.month < 12 else today.year + 1
+            bd = get_nth_business_day(next_y, next_m, data["business_day_number"])
+        data["next_due_date"] = str(bd)
+    elif "next_due_date" in data:
         data["next_due_date"] = str(data["next_due_date"])
+
     result = (
         supabase.table("recurring_transactions")
         .update(data)
@@ -61,7 +101,19 @@ async def delete_recurring(item_id: str):
     return {"message": "Recurring transaction deleted"}
 
 
-def _compute_next_due(current: date, frequency: str) -> date:
+def _compute_next_due(current: date, frequency: str, item: dict | None = None) -> date:
+    """Compute next due date. Supports business day mode for monthly items."""
+    if item and item.get("use_business_day") and item.get("business_day_number"):
+        # Business day mode: calculate Nth business day of the next period
+        if frequency == "monthly":
+            next_m = current.month + 1 if current.month < 12 else 1
+            next_y = current.year if current.month < 12 else current.year + 1
+            return get_nth_business_day(next_y, next_m, item["business_day_number"])
+        elif frequency == "yearly":
+            return get_nth_business_day(
+                current.year + 1, current.month, item["business_day_number"]
+            )
+    # Regular fixed-day logic
     if frequency == "weekly":
         return current + timedelta(weeks=1)
     elif frequency == "yearly":
@@ -72,18 +124,30 @@ def _compute_next_due(current: date, frequency: str) -> date:
 
 @router.post("/generate")
 async def generate_pending():
-    """Generate pending transactions for all active recurring items where next_due_date <= today."""
+    """Generate pending transactions for active recurring items due within 5 days."""
     today = date.today()
+    limit_date = today + timedelta(days=5)
+
     active = (
         supabase.table("recurring_transactions")
         .select("*")
         .eq("is_active", True)
-        .lte("next_due_date", str(today))
+        .lte("next_due_date", str(limit_date))
         .execute()
     ).data
 
     count = 0
     for item in active:
+        current_due = date.fromisoformat(item["next_due_date"])
+
+        # Determine the actual due date for the transaction
+        if item.get("use_business_day") and item.get("business_day_number"):
+            actual_due = get_nth_business_day(
+                current_due.year, current_due.month, item["business_day_number"]
+            )
+        else:
+            actual_due = current_due
+
         # Create a transaction with status 'pending'
         txn_data = {
             "description": item["description"],
@@ -91,14 +155,13 @@ async def generate_pending():
             "type": item["type"],
             "category": item["category"],
             "status": "pending",
-            "due_date": item["next_due_date"],
+            "due_date": str(actual_due),
             "notes": f"Gerado automaticamente (recorrente: {item['frequency']})",
         }
         supabase.table("transactions").insert(txn_data).execute()
 
-        # Update next_due_date
-        current_due = date.fromisoformat(item["next_due_date"])
-        next_due = _compute_next_due(current_due, item["frequency"])
+        # Advance next_due_date
+        next_due = _compute_next_due(current_due, item["frequency"], item)
         supabase.table("recurring_transactions").update(
             {"next_due_date": str(next_due)}
         ).eq("id", item["id"]).execute()

@@ -65,6 +65,8 @@ interface RecurringTransaction {
   day_of_month: number | null;
   is_active: boolean;
   next_due_date: string;
+  use_business_day: boolean;
+  business_day_number: number | null;
   notes: string | null;
   created_at: string | null;
 }
@@ -77,6 +79,8 @@ const defaultForm = {
   frequency: "monthly",
   day_of_month: "",
   next_due_date: "",
+  use_business_day: false,
+  business_day_number: "",
   notes: "",
 };
 
@@ -108,8 +112,14 @@ export default function RecurringPage() {
       type: form.type,
       category: form.category,
       frequency: form.frequency,
-      next_due_date: form.next_due_date,
+      use_business_day: form.use_business_day,
     };
+    if (form.use_business_day && form.business_day_number) {
+      data.business_day_number = parseInt(form.business_day_number);
+      // Backend auto-calculates next_due_date for business day mode
+    } else {
+      data.next_due_date = form.next_due_date;
+    }
     if (form.day_of_month) data.day_of_month = parseInt(form.day_of_month);
     if (form.notes) data.notes = form.notes;
 
@@ -132,6 +142,8 @@ export default function RecurringPage() {
       frequency: item.frequency,
       day_of_month: item.day_of_month ? String(item.day_of_month) : "",
       next_due_date: item.next_due_date || "",
+      use_business_day: item.use_business_day || false,
+      business_day_number: item.business_day_number ? String(item.business_day_number) : "",
       notes: item.notes || "",
     });
     setEditingId(item.id);
@@ -277,30 +289,68 @@ export default function RecurringPage() {
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 py-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm({ ...form, use_business_day: !form.use_business_day })
+                    }
+                    className={`w-10 h-5 rounded-full relative transition-colors ${
+                      form.use_business_day ? "bg-emerald-500" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`block w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform ${
+                        form.use_business_day ? "translate-x-5" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                  <Label className="cursor-pointer" onClick={() =>
+                    setForm({ ...form, use_business_day: !form.use_business_day })
+                  }>
+                    Usar dia util do mes
+                  </Label>
+                </div>
+                {form.use_business_day ? (
                   <div>
-                    <Label>Dia do Mes</Label>
+                    <Label>Qual dia util? (ex: 5 = 5o dia util)</Label>
                     <Input
                       type="number"
                       min="1"
-                      max="31"
-                      value={form.day_of_month}
+                      max="23"
+                      value={form.business_day_number}
                       onChange={(e) =>
-                        setForm({ ...form, day_of_month: e.target.value })
+                        setForm({ ...form, business_day_number: e.target.value })
                       }
+                      placeholder="Ex: 5"
                     />
                   </div>
-                  <div>
-                    <Label>Proximo Vencimento</Label>
-                    <Input
-                      type="date"
-                      value={form.next_due_date}
-                      onChange={(e) =>
-                        setForm({ ...form, next_due_date: e.target.value })
-                      }
-                    />
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Dia do Mes</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="31"
+                        value={form.day_of_month}
+                        onChange={(e) =>
+                          setForm({ ...form, day_of_month: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Proximo Vencimento</Label>
+                      <Input
+                        type="date"
+                        value={form.next_due_date}
+                        onChange={(e) =>
+                          setForm({ ...form, next_due_date: e.target.value })
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
                 <div>
                   <Label>Observacoes</Label>
                   <Input
@@ -420,7 +470,18 @@ export default function RecurringPage() {
                   <TableCell>
                     {FREQUENCIES[item.frequency] || item.frequency}
                   </TableCell>
-                  <TableCell>{item.next_due_date || "-"}</TableCell>
+                  <TableCell>
+                    {item.use_business_day && item.business_day_number ? (
+                      <span>
+                        {item.business_day_number}o dia util
+                        <span className="text-muted-foreground text-xs ml-1">
+                          ({item.next_due_date})
+                        </span>
+                      </span>
+                    ) : (
+                      item.next_due_date || "-"
+                    )}
+                  </TableCell>
                   <TableCell>
                     <button
                       onClick={() => handleToggleActive(item)}

@@ -11,7 +11,9 @@ class RecurringCreate(BaseModel):
     frequency: str = "monthly"  # monthly, weekly, yearly
     day_of_month: Optional[int] = None
     is_active: bool = True
-    next_due_date: date
+    next_due_date: Optional[date] = None
+    use_business_day: bool = False
+    business_day_number: Optional[int] = None  # e.g., 5 = 5th business day
     notes: Optional[str] = None
 
 
@@ -24,6 +26,8 @@ class RecurringUpdate(BaseModel):
     day_of_month: Optional[int] = None
     is_active: Optional[bool] = None
     next_due_date: Optional[date] = None
+    use_business_day: Optional[bool] = None
+    business_day_number: Optional[int] = None
     notes: Optional[str] = None
 
 
@@ -37,5 +41,7 @@ class RecurringResponse(BaseModel):
     day_of_month: Optional[int] = None
     is_active: bool
     next_due_date: date
+    use_business_day: bool = False
+    business_day_number: Optional[int] = None
     notes: Optional[str] = None
     created_at: Optional[datetime] = None
