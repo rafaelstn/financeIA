@@ -21,6 +21,12 @@ app.include_router(investments_router)
 from routes.credit_cards import router as credit_cards_router
 app.include_router(credit_cards_router)
 
+from routes.summary import router as summary_router
+app.include_router(summary_router)
+
+from routes.alerts import router as alerts_router
+app.include_router(alerts_router)
+
 
 @app.get("/")
 async def health_check():
