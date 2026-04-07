@@ -1,9 +1,13 @@
+import logging
+
 from fastapi import APIRouter, HTTPException
 from database import supabase
 from models.chat import ChatRequest, ChatResponse
 from services.ai import get_ai_provider
 from services.chat_tools import TOOL_DEFINITIONS, execute_tool
 from datetime import date
+
+logger = logging.getLogger("financeai.chat")
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -82,6 +86,18 @@ Quando o usuario pedir para registrar, adicionar, pagar, ou qualquer acao sobre 
 - Quando um objetivo for concluido, parabenize e sugira o proximo
 - Relacione objetivos com o orcamento: "Se guardar R$ 500/mes, alcanca a meta em 10 meses"
 - Use as ferramentas create_goal, update_goal e list_goals para gerenciar objetivos
+
+### Contas Recorrentes
+- Quando o usuario disser que paga algo todo mes (agua, luz, internet, aluguel), registre como transacao recorrente
+- Use create_recurring para criar e list_recurring para consultar
+- Sugira gerar as transacoes pendentes periodicamente
+
+### Orcamento por Categoria
+- Quando o usuario definir um orcamento, acompanhe e alerte quando estiver perto do limite
+- Se ultrapassou o limite, alerte imediatamente e sugira onde cortar
+- Compare gastos reais vs orcamento e de nota (ex: "Voce esta otimo em Transporte, 45% do limite")
+- Sugira limites baseados na regra 50-30-20 adaptada a renda do usuario
+- Use create_budget para definir limites e get_budget_status para verificar status
 
 ## Regras
 - SEMPRE use as ferramentas quando o usuario pedir uma acao
@@ -187,6 +203,7 @@ def build_financial_context() -> str:
     try:
         all_debts = supabase.table("debts").select("*").execute().data
     except Exception:
+        logger.exception("Failed to fetch debts for financial context")
         all_debts = []
     active_debts = [d for d in all_debts if d.get("status") in ("ativa", "negociando")]
     agreement_debts = [d for d in all_debts if d.get("status") == "acordo"]
@@ -220,6 +237,7 @@ def build_financial_context() -> str:
     try:
         all_goals = supabase.table("goals").select("*").execute().data
     except Exception:
+        logger.exception("Failed to fetch goals for financial context")
         all_goals = []
     active_goals = [g for g in all_goals if g.get("status") == "ativa"]
     total_target = sum(g["target_amount"] for g in active_goals)
@@ -242,6 +260,45 @@ def build_financial_context() -> str:
         f"- Total necessario: R$ {total_target:.2f}\n"
         f"- Total guardado: R$ {total_saved:.2f} ({goals_pct:.0f}%)\n"
         f"- Detalhes dos objetivos:\n" + ("\n".join(goal_detail_lines) if goal_detail_lines else "  Nenhum objetivo cadastrado")
+    )
+
+    # Recurring transactions
+    try:
+        all_recurring = supabase.table("recurring_transactions").select("*").eq("is_active", True).execute().data
+    except Exception:
+        all_recurring = []
+    recurring_count = len(all_recurring)
+    recurring_expense_total = sum(r["amount"] for r in all_recurring if r["type"] == "expense")
+    recurring_detail_lines = [
+        f"  - {r['description']} R$ {r['amount']:.2f} ({r['frequency']})"
+        for r in all_recurring
+    ]
+    recurring_text = (
+        f"- Contas fixas mensais: {recurring_count} (total despesas: R$ {recurring_expense_total:.2f})\n"
+        f"- Detalhes:\n" + ("\n".join(recurring_detail_lines) if recurring_detail_lines else "  Nenhuma conta recorrente")
+    )
+
+    # Budgets
+    try:
+        all_budgets = supabase.table("budgets").select("*").eq("is_active", True).execute().data
+    except Exception:
+        all_budgets = []
+
+    budget_lines = []
+    if all_budgets:
+        spent_by_cat_budget: dict[str, float] = {}
+        for t in txns:
+            if t["type"] == "expense":
+                cat = t["category"]
+                spent_by_cat_budget[cat] = spent_by_cat_budget.get(cat, 0) + t["amount"]
+        for b in all_budgets:
+            spent = spent_by_cat_budget.get(b["category"], 0)
+            limit_val = b["monthly_limit"]
+            pct = (spent / limit_val * 100) if limit_val > 0 else 0
+            warning = " ⚠️" if pct >= 80 else ""
+            budget_lines.append(f"  - {b['category']}: R$ {spent:.2f} / R$ {limit_val:.2f} ({pct:.0f}%){warning}")
+    budgets_text = (
+        "- Orcamentos definidos:\n" + ("\n".join(budget_lines) if budget_lines else "  Nenhum orcamento definido")
     )
 
     return f"""Data de hoje: {today.isoformat()}
@@ -271,7 +328,13 @@ Mes atual: {m:02d}/{y}
 {debts_text}
 
 ### Objetivos e Metas
-{goals_text}"""
+{goals_text}
+
+### Contas Fixas (Recorrentes)
+{recurring_text}
+
+### Orcamentos por Categoria
+{budgets_text}"""
 
 
 @router.post("/")
@@ -296,6 +359,7 @@ async def chat(request: ChatRequest):
 
         return ChatResponse(response=response_text)
     except Exception as e:
+        logger.exception("Error processing chat request")
         raise HTTPException(status_code=500, detail=str(e))
 
 

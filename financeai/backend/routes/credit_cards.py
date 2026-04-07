@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException
 from database import supabase
 from models.credit_card import (
@@ -6,7 +8,18 @@ from models.credit_card import (
     CardExpenseCreate, CardExpenseUpdate,
 )
 
+logger = logging.getLogger("financeai.credit_cards")
+
 router = APIRouter(prefix="/api/credit-cards", tags=["credit-cards"])
+
+
+def _recalculate_invoice_total(invoice_id: str) -> float:
+    """Recalculate and update invoice total from all its expenses atomically."""
+    expenses = supabase.table("card_expenses").select("amount").eq("invoice_id", invoice_id).execute()
+    total = sum(e["amount"] for e in expenses.data)
+    supabase.table("card_invoices").update({"total_amount": total}).eq("id", invoice_id).execute()
+    logger.info(f"Invoice {invoice_id} total recalculated: R$ {total:.2f}")
+    return total
 
 # --- Cards ---
 
@@ -121,10 +134,7 @@ async def create_expense(card_id: str, invoice_id: str, expense: CardExpenseCrea
     data["invoice_id"] = invoice_id
     data["expense_date"] = str(data["expense_date"])
     result = supabase.table("card_expenses").insert(data).execute()
-    # Update invoice total
-    expenses = supabase.table("card_expenses").select("amount").eq("invoice_id", invoice_id).execute()
-    total = sum(e["amount"] for e in expenses.data)
-    supabase.table("card_invoices").update({"total_amount": total}).eq("id", invoice_id).execute()
+    _recalculate_invoice_total(invoice_id)
     return result.data[0]
 
 
@@ -144,10 +154,7 @@ async def update_expense(card_id: str, invoice_id: str, expense_id: str, expense
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Expense not found")
-    # Recalculate invoice total
-    expenses = supabase.table("card_expenses").select("amount").eq("invoice_id", invoice_id).execute()
-    total = sum(e["amount"] for e in expenses.data)
-    supabase.table("card_invoices").update({"total_amount": total}).eq("id", invoice_id).execute()
+    _recalculate_invoice_total(invoice_id)
     return result.data[0]
 
 
@@ -162,8 +169,5 @@ async def delete_expense(card_id: str, invoice_id: str, expense_id: str):
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Expense not found")
-    # Recalculate invoice total
-    expenses = supabase.table("card_expenses").select("amount").eq("invoice_id", invoice_id).execute()
-    total = sum(e["amount"] for e in expenses.data)
-    supabase.table("card_invoices").update({"total_amount": total}).eq("id", invoice_id).execute()
+    _recalculate_invoice_total(invoice_id)
     return {"message": "Expense deleted"}

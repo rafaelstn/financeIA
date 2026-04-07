@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import date, datetime
 
@@ -10,6 +10,20 @@ class CreditCardCreate(BaseModel):
     closing_day: int
     due_day: int
 
+    @field_validator('limit_amount')
+    @classmethod
+    def limit_must_be_positive(cls, v):
+        if v <= 0:
+            raise ValueError('Limite deve ser maior que zero')
+        return v
+
+    @field_validator('name')
+    @classmethod
+    def name_must_not_be_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Nome nao pode ser vazio')
+        return v.strip()
+
 
 class CreditCardUpdate(BaseModel):
     name: Optional[str] = None
@@ -17,6 +31,20 @@ class CreditCardUpdate(BaseModel):
     limit_amount: Optional[float] = None
     closing_day: Optional[int] = None
     due_day: Optional[int] = None
+
+    @field_validator('limit_amount')
+    @classmethod
+    def limit_must_be_positive(cls, v):
+        if v is not None and v <= 0:
+            raise ValueError('Limite deve ser maior que zero')
+        return v
+
+    @field_validator('name')
+    @classmethod
+    def name_must_not_be_empty(cls, v):
+        if v is not None and not v.strip():
+            raise ValueError('Nome nao pode ser vazio')
+        return v.strip() if v else v
 
 
 class CreditCardResponse(BaseModel):
@@ -64,6 +92,20 @@ class CardExpenseCreate(BaseModel):
     installments: int = 1
     installment_number: int = 1
 
+    @field_validator('amount')
+    @classmethod
+    def amount_must_be_positive(cls, v):
+        if v <= 0:
+            raise ValueError('Valor deve ser maior que zero')
+        return v
+
+    @field_validator('description')
+    @classmethod
+    def description_must_not_be_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Descricao nao pode ser vazia')
+        return v.strip()
+
 
 class CardExpenseUpdate(BaseModel):
     description: Optional[str] = None
@@ -72,6 +114,20 @@ class CardExpenseUpdate(BaseModel):
     expense_date: Optional[date] = None
     installments: Optional[int] = None
     installment_number: Optional[int] = None
+
+    @field_validator('amount')
+    @classmethod
+    def amount_must_be_positive(cls, v):
+        if v is not None and v <= 0:
+            raise ValueError('Valor deve ser maior que zero')
+        return v
+
+    @field_validator('description')
+    @classmethod
+    def description_must_not_be_empty(cls, v):
+        if v is not None and not v.strip():
+            raise ValueError('Descricao nao pode ser vazia')
+        return v.strip() if v else v
 
 
 class CardExpenseResponse(BaseModel):
