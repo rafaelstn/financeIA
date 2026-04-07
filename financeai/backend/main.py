@@ -15,6 +15,12 @@ app.add_middleware(
 from routes.transactions import router as transactions_router
 app.include_router(transactions_router)
 
+from routes.investments import router as investments_router
+app.include_router(investments_router)
+
+from routes.credit_cards import router as credit_cards_router
+app.include_router(credit_cards_router)
+
 
 @app.get("/")
 async def health_check():
