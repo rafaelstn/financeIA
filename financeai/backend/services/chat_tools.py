@@ -254,6 +254,62 @@ TOOL_DEFINITIONS = [
             },
         },
     },
+    {
+        "name": "create_recurring",
+        "description": "Cria uma transacao recorrente (conta fixa mensal). Use quando o usuario disser que paga algo todo mes, como agua, luz, internet, aluguel.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "description": {"type": "string", "description": "Descricao da conta recorrente"},
+                "amount": {"type": "number", "description": "Valor em reais"},
+                "type": {"type": "string", "enum": ["income", "expense"], "description": "income=receita, expense=despesa"},
+                "category": {
+                    "type": "string",
+                    "enum": ["Alimentacao", "Moradia", "Transporte", "Saude", "Lazer", "Educacao", "Salario", "Freelance", "Investimento", "Outros"],
+                    "description": "Categoria",
+                },
+                "frequency": {"type": "string", "enum": ["monthly", "weekly", "yearly"], "description": "Frequencia: monthly=mensal, weekly=semanal, yearly=anual"},
+                "day_of_month": {"type": "integer", "description": "Dia do mes para vencimento"},
+                "next_due_date": {"type": "string", "description": "Proxima data de vencimento YYYY-MM-DD"},
+                "notes": {"type": "string", "description": "Observacoes opcionais"},
+            },
+            "required": ["description", "amount", "type", "category", "next_due_date"],
+        },
+    },
+    {
+        "name": "list_recurring",
+        "description": "Lista transacoes recorrentes ativas.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string", "enum": ["income", "expense"], "description": "Filtrar por tipo"},
+            },
+        },
+    },
+    {
+        "name": "create_budget",
+        "description": "Define um limite de orcamento mensal para uma categoria.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "enum": ["Alimentacao", "Moradia", "Transporte", "Saude", "Lazer", "Educacao", "Salario", "Freelance", "Investimento", "Outros"],
+                    "description": "Categoria do orcamento",
+                },
+                "monthly_limit": {"type": "number", "description": "Limite mensal em reais"},
+            },
+            "required": ["category", "monthly_limit"],
+        },
+    },
+    {
+        "name": "get_budget_status",
+        "description": "Verifica o status dos orcamentos por categoria (quanto ja gastou vs limite).",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+        },
+    },
 ]
 
 
@@ -288,6 +344,14 @@ def execute_tool(name: str, args: dict) -> str:
             return _update_goal(args)
         elif name == "list_goals":
             return _list_goals(args)
+        elif name == "create_recurring":
+            return _create_recurring(args)
+        elif name == "list_recurring":
+            return _list_recurring(args)
+        elif name == "create_budget":
+            return _create_budget(args)
+        elif name == "get_budget_status":
+            return _get_budget_status(args)
         else:
             return json.dumps({"error": f"Tool desconhecida: {name}"})
     except Exception as e:
@@ -502,3 +566,79 @@ def _list_goals(args: dict) -> str:
         query = query.eq("priority", args["priority"])
     result = query.order("created_at", desc=True).execute()
     return json.dumps({"goals": result.data}, default=str)
+
+
+def _create_recurring(args: dict) -> str:
+    data = {
+        "description": args["description"],
+        "amount": args["amount"],
+        "type": args["type"],
+        "category": args["category"],
+        "next_due_date": args["next_due_date"],
+    }
+    if "frequency" in args:
+        data["frequency"] = args["frequency"]
+    if "day_of_month" in args:
+        data["day_of_month"] = args["day_of_month"]
+    if "notes" in args:
+        data["notes"] = args["notes"]
+
+    result = supabase.table("recurring_transactions").insert(data).execute()
+    return json.dumps({"success": True, "recurring": result.data[0]}, default=str)
+
+
+def _list_recurring(args: dict) -> str:
+    query = supabase.table("recurring_transactions").select("*").eq("is_active", True)
+    if "type" in args:
+        query = query.eq("type", args["type"])
+    result = query.order("next_due_date").execute()
+    return json.dumps({"recurring": result.data}, default=str)
+
+
+def _create_budget(args: dict) -> str:
+    data = {
+        "category": args["category"],
+        "monthly_limit": args["monthly_limit"],
+    }
+    result = supabase.table("budgets").insert(data).execute()
+    return json.dumps({"success": True, "budget": result.data[0]}, default=str)
+
+
+def _get_budget_status(_args: dict) -> str:
+    today = date.today()
+    m, y = today.month, today.year
+    start = f"{y}-{m:02d}-01"
+    end_month = m + 1 if m < 12 else 1
+    end_year = y if m < 12 else y + 1
+    end = f"{end_year}-{end_month:02d}-01"
+
+    budgets = supabase.table("budgets").select("*").eq("is_active", True).execute().data
+    txns = (
+        supabase.table("transactions")
+        .select("category, amount")
+        .eq("type", "expense")
+        .gte("due_date", start)
+        .lt("due_date", end)
+        .execute()
+    ).data
+
+    spent_by_cat: dict[str, float] = {}
+    for t in txns:
+        cat = t["category"]
+        spent_by_cat[cat] = spent_by_cat.get(cat, 0) + t["amount"]
+
+    status_list = []
+    for b in budgets:
+        spent = spent_by_cat.get(b["category"], 0)
+        limit_val = b["monthly_limit"]
+        remaining = limit_val - spent
+        pct = (spent / limit_val * 100) if limit_val > 0 else 0
+        status_list.append({
+            "category": b["category"],
+            "limit": limit_val,
+            "spent": round(spent, 2),
+            "remaining": round(remaining, 2),
+            "percentage": round(pct, 1),
+        })
+
+    return json.dumps({"budgets": status_list}, default=str)

@@ -7,3 +7,4 @@ openai
 google-genai
 pydantic
 httpx
+python-dateutil
