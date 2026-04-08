@@ -58,6 +58,15 @@ async def monthly_summary(month: int | None = None, year: int | None = None):
     total_invested = sum(i["invested_amount"] for i in investments)
     total_current = sum(i["current_amount"] for i in investments)
 
+    # Dízimo e Primícia
+    tithe_txn = next((t for t in txns if t["type"] == "expense" and t["category"] == "Dizimo"), None)
+    firstfruits_txn = next((t for t in txns if t["type"] == "expense" and t["category"] == "Primicia"), None)
+
+    tithe = tithe_txn["amount"] if tithe_txn else 0
+    tithe_status = tithe_txn["status"] if tithe_txn else "pending"
+    firstfruits = firstfruits_txn["amount"] if firstfruits_txn else 0
+    firstfruits_status = firstfruits_txn["status"] if firstfruits_txn else "pending"
+
     return {
         "month": m,
         "year": y,
@@ -68,6 +77,10 @@ async def monthly_summary(month: int | None = None, year: int | None = None):
         "card_totals": card_totals,
         "total_invested": total_invested,
         "total_current": total_current,
+        "tithe": tithe,
+        "tithe_status": tithe_status,
+        "firstfruits": firstfruits,
+        "firstfruits_status": firstfruits_status,
     }
 
 
