@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from database import supabase
 from models.transaction import TransactionCreate, TransactionUpdate, TransactionResponse
+from services.tithe_service import sync_tithe_and_firstfruits, TITHE_CATEGORIES
+from datetime import date as date_type
 
 router = APIRouter(prefix="/api/transactions", tags=["transactions"])
 
@@ -48,7 +50,11 @@ async def create_transaction(transaction: TransactionCreate):
         if key in data and data[key] is not None:
             data[key] = str(data[key])
     result = supabase.table("transactions").insert(data).execute()
-    return result.data[0]
+    created = result.data[0]
+    if created.get("type") == "income" and created.get("due_date"):
+        d = date_type.fromisoformat(created["due_date"])
+        sync_tithe_and_firstfruits(d.month, d.year)
+    return created
 
 
 @router.put("/{transaction_id}")
@@ -56,18 +62,42 @@ async def update_transaction(transaction_id: str, transaction: TransactionUpdate
     data = transaction.model_dump(exclude_none=True)
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
+    # Verifica se é transação automática — só permite mudar status
+    existing_check = supabase.table("transactions").select("category").eq("id", transaction_id).execute()
+    if existing_check.data and existing_check.data[0].get("category") in TITHE_CATEGORIES:
+        allowed_fields = {"status", "paid_date"}
+        if not set(data.keys()).issubset(allowed_fields):
+            raise HTTPException(status_code=400, detail="Só é possível alterar o status de transações de dízimo/primícia")
     for key in ("due_date", "paid_date"):
         if key in data and data[key] is not None:
             data[key] = str(data[key])
     result = supabase.table("transactions").update(data).eq("id", transaction_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    return result.data[0]
+    updated = result.data[0]
+    if updated.get("type") == "income" and updated.get("due_date"):
+        d = date_type.fromisoformat(updated["due_date"])
+        sync_tithe_and_firstfruits(d.month, d.year)
+    return updated
 
 
 @router.delete("/{transaction_id}")
 async def delete_transaction(transaction_id: str):
-    result = supabase.table("transactions").delete().eq("id", transaction_id).execute()
-    if not result.data:
+    # Busca antes de deletar para saber se precisa recalcular
+    existing = supabase.table("transactions").select("type, due_date, category").eq("id", transaction_id).execute()
+    if not existing.data:
         raise HTTPException(status_code=404, detail="Transaction not found")
+
+    txn = existing.data[0]
+
+    # Impede deletar transações automáticas de dízimo/primícia
+    if txn.get("category") in TITHE_CATEGORIES:
+        raise HTTPException(status_code=400, detail="Transações de dízimo/primícia são gerenciadas automaticamente")
+
+    supabase.table("transactions").delete().eq("id", transaction_id).execute()
+
+    if txn.get("type") == "income" and txn.get("due_date"):
+        d = date_type.fromisoformat(txn["due_date"])
+        sync_tithe_and_firstfruits(d.month, d.year)
+
     return {"message": "Transaction deleted"}
