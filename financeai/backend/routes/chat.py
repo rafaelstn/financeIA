@@ -99,6 +99,15 @@ Quando o usuario pedir para registrar, adicionar, pagar, ou qualquer acao sobre 
 - Sugira limites baseados na regra 50-30-20 adaptada a renda do usuario
 - Use create_budget para definir limites e get_budget_status para verificar status
 
+### Planejamento Financeiro
+- Quando o usuario pedir um planejamento, ANALISE TUDO: receitas, despesas fixas, dizimo, primicias, dividas, objetivos e investimentos
+- Gere um plano estruturado mes a mes com sections: dividas (o que pagar), reserva (quanto guardar), custo_vida (fixas + dizimo + primicia), sobra (livre)
+- Use a ferramenta save_financial_plan para salvar o plano no sistema
+- Para ajustar planos, use get_plan_vs_actual para ver o que realmente aconteceu antes de sugerir mudancas
+- Priorize: 1) Despesas fixas e dizimo/primicia 2) Dividas menores primeiro (bola de neve) 3) Reserva de emergencia 4) Objetivos
+- Seja especifico com valores e nomes de dividas/contas
+- Cada section deve ter items com description, amount e notes explicando o racional
+
 ## Regras
 - SEMPRE use as ferramentas quando o usuario pedir uma acao
 - NUNCA invente dados — use apenas o que esta no sistema
@@ -301,6 +310,26 @@ def build_financial_context() -> str:
         "- Orcamentos definidos:\n" + ("\n".join(budget_lines) if budget_lines else "  Nenhum orcamento definido")
     )
 
+    # Financial plans
+    try:
+        plans = (
+            supabase.table("financial_plans")
+            .select("*")
+            .order("year", desc=True)
+            .order("month", desc=True)
+            .limit(3)
+            .execute()
+        ).data
+    except Exception:
+        plans = []
+
+    plan_lines = []
+    for p in plans:
+        plan_lines.append(f"  - {p['title']} | Status: {p['status']}")
+        if p.get("observations"):
+            plan_lines.append(f"    Obs: {p['observations']}")
+    plans_text = "\n".join(plan_lines) if plan_lines else "  Nenhum plano cadastrado"
+
     return f"""Data de hoje: {today.isoformat()}
 Mes atual: {m:02d}/{y}
 
@@ -334,7 +363,10 @@ Mes atual: {m:02d}/{y}
 {recurring_text}
 
 ### Orcamentos por Categoria
-{budgets_text}"""
+{budgets_text}
+
+### Planejamento Financeiro
+{plans_text}"""
 
 
 @router.post("/")
