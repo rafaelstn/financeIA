@@ -312,6 +312,36 @@ TOOL_DEFINITIONS = [
             "properties": {},
         },
     },
+    {
+        "name": "save_financial_plan",
+        "description": "Salva ou atualiza um plano financeiro para um mes especifico. Use quando o usuario pedir para criar, gerar ou atualizar um planejamento financeiro.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "month": {"type": "integer", "description": "Mes do plano (1-12)"},
+                "year": {"type": "integer", "description": "Ano do plano"},
+                "title": {"type": "string", "description": "Titulo do plano (ex: Reestruturacao - Maio/2026)"},
+                "content": {
+                    "type": "object",
+                    "description": "Plano estruturado com sections. Cada section tem: category (dividas/reserva/custo_vida/sobra), title, items (array de {description, amount, notes}), total",
+                },
+                "status": {"type": "string", "enum": ["planejado", "em_andamento", "concluido"], "description": "Status do plano"},
+            },
+            "required": ["month", "year", "title", "content"],
+        },
+    },
+    {
+        "name": "get_plan_vs_actual",
+        "description": "Retorna o comparativo entre o plano financeiro e o que realmente aconteceu em um mes. Use quando o usuario quiser ver como foi o mes em relacao ao planejado, ou antes de ajustar o plano do proximo mes.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "month": {"type": "integer", "description": "Mes (1-12)"},
+                "year": {"type": "integer", "description": "Ano"},
+            },
+            "required": ["month", "year"],
+        },
+    },
 ]
 
 
@@ -354,6 +384,10 @@ def execute_tool(name: str, args: dict) -> str:
             return _create_budget(args)
         elif name == "get_budget_status":
             return _get_budget_status(args)
+        elif name == "save_financial_plan":
+            return _save_financial_plan(args)
+        elif name == "get_plan_vs_actual":
+            return _get_plan_vs_actual(args)
         else:
             return json.dumps({"error": f"Tool desconhecida: {name}"})
     except Exception as e:
@@ -623,6 +657,92 @@ def _create_budget(args: dict) -> str:
     }
     result = supabase.table("budgets").insert(data).execute()
     return json.dumps({"success": True, "budget": result.data[0]}, default=str)
+
+
+def _save_financial_plan(args: dict) -> str:
+    month = args["month"]
+    year = args["year"]
+    title = args["title"]
+    content = args["content"]
+    status = args.get("status", "planejado")
+
+    existing = (
+        supabase.table("financial_plans")
+        .select("id")
+        .eq("month", month)
+        .eq("year", year)
+        .execute()
+    ).data
+
+    if existing:
+        result = (
+            supabase.table("financial_plans")
+            .update({"title": title, "content": content, "status": status})
+            .eq("id", existing[0]["id"])
+            .execute()
+        )
+        return json.dumps({"success": True, "action": "updated", "plan": result.data[0]}, default=str)
+    else:
+        result = (
+            supabase.table("financial_plans")
+            .insert({"month": month, "year": year, "title": title, "content": content, "status": status})
+            .execute()
+        )
+        return json.dumps({"success": True, "action": "created", "plan": result.data[0]}, default=str)
+
+
+def _get_plan_vs_actual(args: dict) -> str:
+    month = args["month"]
+    year = args["year"]
+
+    plan_data = (
+        supabase.table("financial_plans")
+        .select("*")
+        .eq("month", month)
+        .eq("year", year)
+        .execute()
+    ).data
+    plan = plan_data[0] if plan_data else None
+
+    start = f"{year}-{month:02d}-01"
+    end_month = month + 1 if month < 12 else 1
+    end_year = year if month < 12 else year + 1
+    end = f"{end_year}-{end_month:02d}-01"
+
+    txns = (
+        supabase.table("transactions")
+        .select("*")
+        .gte("due_date", start)
+        .lt("due_date", end)
+        .execute()
+    ).data
+
+    income = sum(t["amount"] for t in txns if t["type"] == "income")
+    expenses = sum(t["amount"] for t in txns if t["type"] == "expense")
+
+    by_category: dict[str, float] = {}
+    for t in txns:
+        if t["type"] == "expense":
+            cat = t["category"]
+            by_category[cat] = by_category.get(cat, 0) + t["amount"]
+
+    debts = supabase.table("debts").select("creditor, status, current_amount").execute().data
+    debts_paid = [d["creditor"] for d in debts if d.get("status") == "quitada"]
+
+    investments = supabase.table("investments").select("invested_amount").execute().data
+    total_invested = sum(i["invested_amount"] for i in investments)
+
+    return json.dumps({
+        "plan": plan,
+        "actual": {
+            "income": income,
+            "expenses": expenses,
+            "balance": income - expenses,
+            "by_category": by_category,
+            "debts_paid": debts_paid,
+            "total_invested": total_invested,
+        },
+    }, default=str)
 
 
 def _get_budget_status(_args: dict) -> str:
