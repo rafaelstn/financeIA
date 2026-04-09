@@ -67,6 +67,9 @@ app.include_router(budgets_router)
 from routes.chat import router as chat_router
 app.include_router(chat_router)
 
+from routes.plans import router as plans_router
+app.include_router(plans_router)
+
 
 @app.get("/")
 async def health_check():
