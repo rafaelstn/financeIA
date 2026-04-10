@@ -128,3 +128,44 @@ async def yearly_summary(year: int | None = None):
         months.append({"month": m, "income": income, "expenses": expenses})
 
     return {"year": y, "months": months}
+
+
+@router.get("/upcoming")
+async def upcoming_bills():
+    today = date.today()
+    limit = today + timedelta(days=30)
+
+    # Pending transactions with due_date in next 30 days
+    pending_txns = (
+        supabase.table("transactions")
+        .select("description, amount, due_date, status")
+        .eq("status", "pending")
+        .gte("due_date", str(today))
+        .lte("due_date", str(limit))
+        .order("due_date")
+        .execute()
+    ).data
+
+    # Also get overdue transactions
+    overdue_txns = (
+        supabase.table("transactions")
+        .select("description, amount, due_date, status")
+        .eq("status", "overdue")
+        .order("due_date")
+        .execute()
+    ).data
+
+    upcoming = []
+    for t in overdue_txns + pending_txns:
+        due = date.fromisoformat(t["due_date"]) if t.get("due_date") else today
+        days_until = (due - today).days
+        upcoming.append({
+            "description": t["description"],
+            "amount": t["amount"],
+            "due_date": t["due_date"],
+            "days_until": days_until,
+            "status": t["status"],
+        })
+
+    upcoming.sort(key=lambda x: x.get("due_date") or "9999-12-31")
+    return {"upcoming": upcoming}
