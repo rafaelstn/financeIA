@@ -3,15 +3,7 @@ import axios from "axios";
 const api = axios.create({
   baseURL: "http://localhost:8000/api",
   headers: { "Content-Type": "application/json" },
-  timeout: 30000,
-});
-
-// Ensure trailing slash to avoid FastAPI 307 redirects on POST
-api.interceptors.request.use((config) => {
-  if (config.url && !config.url.includes("?") && !config.url.endsWith("/")) {
-    config.url += "/";
-  }
-  return config;
+  timeout: 120000,
 });
 
 api.interceptors.response.use(

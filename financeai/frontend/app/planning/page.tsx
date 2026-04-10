@@ -85,7 +85,7 @@ export default function PlanningPage() {
     setLoading(true);
 
     try {
-      const res = await api.post("/chat", { message: userMsg.content, history: messages });
+      const res = await api.post("/chat/", { message: userMsg.content, history: messages });
       setMessages([...updated, { role: "assistant", content: res.data.response, timestamp: timestamp() }]);
       // Refresh plan after AI response (might have saved a new plan)
       api.get(`/plans/${month}/${year}`)

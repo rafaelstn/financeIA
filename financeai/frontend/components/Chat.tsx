@@ -45,7 +45,7 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const res = await api.post("/chat", { message: userMsg.content, history: messages });
+      const res = await api.post("/chat/", { message: userMsg.content, history: messages });
       setMessages([...updated, { role: "assistant", content: res.data.response, timestamp: now() }]);
     } catch {
       setMessages([...updated, { role: "assistant", content: "Erro ao conectar com a IA. Tente novamente.", timestamp: now() }]);
@@ -82,7 +82,7 @@ export default function Chat() {
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
               <p className="text-sm text-muted-foreground text-center mt-8">
-                Pergunte sobre suas financas!
+                Pergunte sobre suas finanças!
               </p>
             )}
             {messages.map((msg, i) => (
