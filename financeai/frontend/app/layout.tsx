@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <div className="flex min-h-screen">
             <Sidebar />
-            <main className="flex-1 p-6 overflow-auto">{children}</main>
+            <main className="flex-1 p-4 lg:p-6 overflow-auto min-w-0 pt-14 lg:pt-6">{children}</main>
           </div>
           <Chat />
           <Toaster theme="dark" position="bottom-right" richColors />

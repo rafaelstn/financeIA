@@ -28,7 +28,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-4 max-w-[1200px]">
+    <div className="space-y-4 w-full">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
