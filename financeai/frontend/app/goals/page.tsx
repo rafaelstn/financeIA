@@ -84,6 +84,17 @@ export default function GoalsPage() {
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [savingGoalId, setSavingGoalId] = useState<string | null>(null);
   const [saveAmount, setSaveAmount] = useState("");
+  const [sortBy, setSortBy] = useState<string>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const toggleSort = (col: string) => {
+    if (sortBy === col) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(col);
+      setSortDir("asc");
+    }
+  };
 
   const load = () => {
     const params: Record<string, string> = {};
@@ -453,6 +464,30 @@ export default function GoalsPage() {
         </Select>
       </div>
 
+      {/* Sort Controls */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span>Ordenar por:</span>
+        {[
+          { key: "name", label: "Nome" },
+          { key: "target_amount", label: "Meta" },
+          { key: "saved_amount", label: "Guardado" },
+          { key: "priority", label: "Prioridade" },
+          { key: "status", label: "Status" },
+        ].map((col) => (
+          <button
+            key={col.key}
+            onClick={() => toggleSort(col.key)}
+            className={`px-2 py-1 rounded border text-xs transition-colors ${
+              sortBy === col.key
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border hover:border-foreground"
+            }`}
+          >
+            {col.label} {sortBy === col.key && (sortDir === "asc" ? "↑" : "↓")}
+          </button>
+        ))}
+      </div>
+
       {/* Goal Cards */}
       {goals.length === 0 ? (
         <Card>
@@ -466,7 +501,19 @@ export default function GoalsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {goals.map((g) => {
+          {goals
+            .slice()
+            .sort((a, b) => {
+              const valA = a[sortBy as keyof Goal] ?? "";
+              const valB = b[sortBy as keyof Goal] ?? "";
+              if (typeof valA === "number" && typeof valB === "number") {
+                return sortDir === "asc" ? valA - valB : valB - valA;
+              }
+              const strA = String(valA).toLowerCase();
+              const strB = String(valB).toLowerCase();
+              return sortDir === "asc" ? strA.localeCompare(strB) : strB.localeCompare(strA);
+            })
+            .map((g) => {
             const pct =
               g.target_amount > 0
                 ? (g.saved_amount / g.target_amount) * 100

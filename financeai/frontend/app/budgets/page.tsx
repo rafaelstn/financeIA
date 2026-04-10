@@ -77,6 +77,17 @@ export default function BudgetsPage() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...defaultForm });
+  const [sortBy, setSortBy] = useState<string>("category");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const toggleSort = (col: string) => {
+    if (sortBy === col) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(col);
+      setSortDir("asc");
+    }
+  };
 
   const load = () => {
     api.get("/budgets/status").then((res) => setStatusList(res.data));
@@ -232,9 +243,42 @@ export default function BudgetsPage() {
         </CardContent>
       </Card>
 
+      {/* Sort Controls */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span>Ordenar por:</span>
+        {[
+          { key: "category", label: "Categoria" },
+          { key: "monthly_limit", label: "Limite Mensal" },
+        ].map((col) => (
+          <button
+            key={col.key}
+            onClick={() => toggleSort(col.key)}
+            className={`px-2 py-1 rounded border text-xs transition-colors ${
+              sortBy === col.key
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border hover:border-foreground"
+            }`}
+          >
+            {col.label} {sortBy === col.key && (sortDir === "asc" ? "↑" : "↓")}
+          </button>
+        ))}
+      </div>
+
       {/* Budget Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {statusList.map((b) => {
+        {statusList
+          .slice()
+          .sort((a, b) => {
+            const valA = a[sortBy as keyof BudgetStatus] ?? "";
+            const valB = b[sortBy as keyof BudgetStatus] ?? "";
+            if (typeof valA === "number" && typeof valB === "number") {
+              return sortDir === "asc" ? valA - valB : valB - valA;
+            }
+            const strA = String(valA).toLowerCase();
+            const strB = String(valB).toLowerCase();
+            return sortDir === "asc" ? strA.localeCompare(strB) : strB.localeCompare(strA);
+          })
+          .map((b) => {
           const budget = budgets.find((bg) => bg.id === b.id);
           return (
             <Card

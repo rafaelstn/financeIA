@@ -30,6 +30,17 @@ export default function InvestmentsPage() {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const toggleSort = (col: string) => {
+    if (sortBy === col) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(col);
+      setSortDir("asc");
+    }
+  };
   const [form, setForm] = useState({
     name: "", type: "", institution: "", invested_amount: "",
     current_amount: "", start_date: "", maturity_date: "", notes: "",
@@ -138,18 +149,45 @@ export default function InvestmentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Instituição</TableHead>
-                <TableHead>Investido</TableHead>
-                <TableHead>Atual</TableHead>
+                {[
+                  { key: "name", label: "Nome" },
+                  { key: "type", label: "Tipo" },
+                  { key: "institution", label: "Instituição" },
+                  { key: "invested_amount", label: "Investido" },
+                  { key: "current_amount", label: "Atual" },
+                ].map((col) => (
+                  <TableHead
+                    key={col.key}
+                    className="cursor-pointer select-none hover:text-foreground transition-colors"
+                    onClick={() => toggleSort(col.key)}
+                  >
+                    {col.label} {sortBy === col.key && (sortDir === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                ))}
                 <TableHead>Retorno</TableHead>
-                <TableHead>Inicio</TableHead>
+                <TableHead
+                  className="cursor-pointer select-none hover:text-foreground transition-colors"
+                  onClick={() => toggleSort("start_date")}
+                >
+                  Início {sortBy === "start_date" && (sortDir === "asc" ? "↑" : "↓")}
+                </TableHead>
                 <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {investments.map((inv) => {
+              {investments
+                .slice()
+                .sort((a, b) => {
+                  const valA = a[sortBy as keyof Investment] ?? "";
+                  const valB = b[sortBy as keyof Investment] ?? "";
+                  if (typeof valA === "number" && typeof valB === "number") {
+                    return sortDir === "asc" ? valA - valB : valB - valA;
+                  }
+                  const strA = String(valA).toLowerCase();
+                  const strB = String(valB).toLowerCase();
+                  return sortDir === "asc" ? strA.localeCompare(strB) : strB.localeCompare(strA);
+                })
+                .map((inv) => {
                 const ret = inv.current_amount - inv.invested_amount;
                 return (
                   <TableRow key={inv.id}>

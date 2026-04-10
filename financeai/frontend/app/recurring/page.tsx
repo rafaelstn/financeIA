@@ -96,6 +96,17 @@ export default function RecurringPage() {
   const [form, setForm] = useState({ ...defaultForm });
   const [generating, setGenerating] = useState(false);
   const [generatedCount, setGeneratedCount] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<string>("description");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const toggleSort = (col: string) => {
+    if (sortBy === col) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(col);
+      setSortDir("asc");
+    }
+  };
 
   const load = () => {
     api.get("/recurring").then((res) => setItems(res.data));
@@ -469,18 +480,40 @@ export default function RecurringPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Frequência</TableHead>
-                <TableHead>Próximo Vencimento</TableHead>
+                {[
+                  { key: "description", label: "Descrição" },
+                  { key: "amount", label: "Valor" },
+                  { key: "type", label: "Tipo" },
+                  { key: "category", label: "Categoria" },
+                  { key: "frequency", label: "Frequência" },
+                  { key: "next_due_date", label: "Próximo Vencimento" },
+                ].map((col) => (
+                  <TableHead
+                    key={col.key}
+                    className="cursor-pointer select-none hover:text-foreground transition-colors"
+                    onClick={() => toggleSort(col.key)}
+                  >
+                    {col.label} {sortBy === col.key && (sortDir === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                ))}
                 <TableHead>Ativo?</TableHead>
                 <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item) => (
+              {items
+                .slice()
+                .sort((a, b) => {
+                  const valA = a[sortBy as keyof RecurringTransaction] ?? "";
+                  const valB = b[sortBy as keyof RecurringTransaction] ?? "";
+                  if (typeof valA === "number" && typeof valB === "number") {
+                    return sortDir === "asc" ? valA - valB : valB - valA;
+                  }
+                  const strA = String(valA).toLowerCase();
+                  const strB = String(valB).toLowerCase();
+                  return sortDir === "asc" ? strA.localeCompare(strB) : strB.localeCompare(strA);
+                })
+                .map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">
                     {item.description}

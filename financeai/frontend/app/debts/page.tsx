@@ -92,6 +92,17 @@ export default function DebtsPage() {
   const [form, setForm] = useState({ ...defaultForm });
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("creditor");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const toggleSort = (col: string) => {
+    if (sortBy === col) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(col);
+      setSortDir("asc");
+    }
+  };
 
   const load = () => {
     const params: Record<string, string> = {};
@@ -472,19 +483,46 @@ export default function DebtsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Credor</TableHead>
-                <TableHead>Valor Original</TableHead>
-                <TableHead>Valor Atual</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Origem</TableHead>
-                <TableHead>Pagando?</TableHead>
+                {[
+                  { key: "creditor", label: "Credor" },
+                  { key: "original_amount", label: "Valor Original" },
+                  { key: "current_amount", label: "Valor Atual" },
+                  { key: "category", label: "Categoria" },
+                  { key: "status", label: "Status" },
+                  { key: "origin_date", label: "Origem" },
+                  { key: "is_paying", label: "Pagando?" },
+                ].map((col) => (
+                  <TableHead
+                    key={col.key}
+                    className="cursor-pointer select-none hover:text-foreground transition-colors"
+                    onClick={() => toggleSort(col.key)}
+                  >
+                    {col.label} {sortBy === col.key && (sortDir === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                ))}
                 <TableHead>Parcela</TableHead>
                 <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {debts.map((d) => (
+              {debts
+                .slice()
+                .sort((a, b) => {
+                  const valA = a[sortBy as keyof Debt] ?? "";
+                  const valB = b[sortBy as keyof Debt] ?? "";
+                  if (typeof valA === "number" && typeof valB === "number") {
+                    return sortDir === "asc" ? valA - valB : valB - valA;
+                  }
+                  if (typeof valA === "boolean" && typeof valB === "boolean") {
+                    return sortDir === "asc"
+                      ? Number(valA) - Number(valB)
+                      : Number(valB) - Number(valA);
+                  }
+                  const strA = String(valA).toLowerCase();
+                  const strB = String(valB).toLowerCase();
+                  return sortDir === "asc" ? strA.localeCompare(strB) : strB.localeCompare(strA);
+                })
+                .map((d) => (
                 <TableRow key={d.id}>
                   <TableCell className="font-medium">{d.creditor}</TableCell>
                   <TableCell>
@@ -531,6 +569,7 @@ export default function DebtsPage() {
                 </TableRow>
               ))}
             </TableBody>
+
           </Table>
         </CardContent>
       </Card>
