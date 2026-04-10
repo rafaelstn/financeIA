@@ -342,6 +342,136 @@ TOOL_DEFINITIONS = [
             "required": ["month", "year"],
         },
     },
+    # --- Ferramentas adicionais ---
+    {
+        "name": "delete_investment",
+        "description": "Remove um investimento. Use quando o usuario pedir para apagar ou remover um investimento.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "investment_id": {"type": "string", "description": "ID do investimento a remover"},
+            },
+            "required": ["investment_id"],
+        },
+    },
+    {
+        "name": "list_investments",
+        "description": "Lista todos os investimentos cadastrados.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+        },
+    },
+    {
+        "name": "delete_debt",
+        "description": "Remove uma divida do cadastro. Use quando o usuario pedir para apagar uma divida.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "debt_id": {"type": "string", "description": "ID da divida a remover"},
+            },
+            "required": ["debt_id"],
+        },
+    },
+    {
+        "name": "delete_goal",
+        "description": "Remove um objetivo/meta. Use quando o usuario pedir para apagar uma meta.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "goal_id": {"type": "string", "description": "ID do objetivo a remover"},
+            },
+            "required": ["goal_id"],
+        },
+    },
+    {
+        "name": "update_recurring",
+        "description": "Atualiza uma transacao recorrente. Use para mudar valor, descricao, categoria, ativar/desativar, etc.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "recurring_id": {"type": "string", "description": "ID da recorrente a atualizar"},
+                "description": {"type": "string"},
+                "amount": {"type": "number"},
+                "type": {"type": "string", "enum": ["income", "expense"]},
+                "category": {"type": "string"},
+                "frequency": {"type": "string", "enum": ["monthly", "weekly", "yearly"]},
+                "day_of_month": {"type": "integer"},
+                "is_active": {"type": "boolean", "description": "true=ativa, false=desativada"},
+                "use_business_day": {"type": "boolean"},
+                "business_day_number": {"type": "integer"},
+                "notes": {"type": "string"},
+            },
+            "required": ["recurring_id"],
+        },
+    },
+    {
+        "name": "delete_recurring",
+        "description": "Remove uma transacao recorrente. Use quando o usuario pedir para apagar uma conta fixa.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "recurring_id": {"type": "string", "description": "ID da recorrente a remover"},
+            },
+            "required": ["recurring_id"],
+        },
+    },
+    {
+        "name": "update_budget",
+        "description": "Atualiza um orcamento existente. Use para mudar o limite mensal ou ativar/desativar.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "budget_id": {"type": "string", "description": "ID do orcamento a atualizar"},
+                "category": {"type": "string"},
+                "monthly_limit": {"type": "number"},
+                "is_active": {"type": "boolean"},
+            },
+            "required": ["budget_id"],
+        },
+    },
+    {
+        "name": "delete_budget",
+        "description": "Remove um orcamento. Use quando o usuario pedir para apagar um limite de orcamento.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "budget_id": {"type": "string", "description": "ID do orcamento a remover"},
+            },
+            "required": ["budget_id"],
+        },
+    },
+    {
+        "name": "list_budgets",
+        "description": "Lista todos os orcamentos cadastrados com limites e status.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+        },
+    },
+    {
+        "name": "update_plan",
+        "description": "Atualiza um plano financeiro existente. Use para mudar status, observacoes ou conteudo.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "plan_id": {"type": "string", "description": "ID do plano a atualizar"},
+                "title": {"type": "string"},
+                "content": {"type": "object"},
+                "status": {"type": "string", "enum": ["planejado", "em_andamento", "concluido"]},
+                "observations": {"type": "string"},
+            },
+            "required": ["plan_id"],
+        },
+    },
+    {
+        "name": "generate_recurring",
+        "description": "Gera transacoes pendentes a partir das contas recorrentes. Cria lancamentos para os proximos 3 meses. Seguro contra duplicatas.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+        },
+    },
 ]
 
 
@@ -388,6 +518,28 @@ def execute_tool(name: str, args: dict) -> str:
             return _save_financial_plan(args)
         elif name == "get_plan_vs_actual":
             return _get_plan_vs_actual(args)
+        elif name == "delete_investment":
+            return _delete_investment(args)
+        elif name == "list_investments":
+            return _list_investments(args)
+        elif name == "delete_debt":
+            return _delete_debt(args)
+        elif name == "delete_goal":
+            return _delete_goal(args)
+        elif name == "update_recurring":
+            return _update_recurring(args)
+        elif name == "delete_recurring":
+            return _delete_recurring(args)
+        elif name == "update_budget":
+            return _update_budget(args)
+        elif name == "delete_budget":
+            return _delete_budget(args)
+        elif name == "list_budgets":
+            return _list_budgets(args)
+        elif name == "update_plan":
+            return _update_plan(args)
+        elif name == "generate_recurring":
+            return _generate_recurring(args)
         else:
             return json.dumps({"error": f"Tool desconhecida: {name}"})
     except Exception as e:
@@ -783,3 +935,92 @@ def _get_budget_status(_args: dict) -> str:
         })
 
     return json.dumps({"budgets": status_list}, default=str)
+
+
+def _delete_investment(args: dict) -> str:
+    iid = args["investment_id"]
+    result = supabase.table("investments").delete().eq("id", iid).execute()
+    if not result.data:
+        return json.dumps({"error": "Investimento nao encontrado"})
+    return json.dumps({"success": True, "message": "Investimento removido"})
+
+
+def _list_investments(_args: dict) -> str:
+    result = supabase.table("investments").select("*").order("created_at", desc=True).execute()
+    return json.dumps({"investments": result.data}, default=str)
+
+
+def _delete_debt(args: dict) -> str:
+    did = args["debt_id"]
+    result = supabase.table("debts").delete().eq("id", did).execute()
+    if not result.data:
+        return json.dumps({"error": "Divida nao encontrada"})
+    return json.dumps({"success": True, "message": "Divida removida"})
+
+
+def _delete_goal(args: dict) -> str:
+    gid = args["goal_id"]
+    result = supabase.table("goals").delete().eq("id", gid).execute()
+    if not result.data:
+        return json.dumps({"error": "Objetivo nao encontrado"})
+    return json.dumps({"success": True, "message": "Objetivo removido"})
+
+
+def _update_recurring(args: dict) -> str:
+    rid = args.pop("recurring_id")
+    if not args:
+        return json.dumps({"error": "Nenhum campo para atualizar"})
+    result = supabase.table("recurring_transactions").update(args).eq("id", rid).execute()
+    if not result.data:
+        return json.dumps({"error": "Recorrente nao encontrada"})
+    return json.dumps({"success": True, "recurring": result.data[0]}, default=str)
+
+
+def _delete_recurring(args: dict) -> str:
+    rid = args["recurring_id"]
+    result = supabase.table("recurring_transactions").delete().eq("id", rid).execute()
+    if not result.data:
+        return json.dumps({"error": "Recorrente nao encontrada"})
+    return json.dumps({"success": True, "message": "Recorrente removida"})
+
+
+def _update_budget(args: dict) -> str:
+    bid = args.pop("budget_id")
+    if not args:
+        return json.dumps({"error": "Nenhum campo para atualizar"})
+    result = supabase.table("budgets").update(args).eq("id", bid).execute()
+    if not result.data:
+        return json.dumps({"error": "Orcamento nao encontrado"})
+    return json.dumps({"success": True, "budget": result.data[0]}, default=str)
+
+
+def _delete_budget(args: dict) -> str:
+    bid = args["budget_id"]
+    result = supabase.table("budgets").delete().eq("id", bid).execute()
+    if not result.data:
+        return json.dumps({"error": "Orcamento nao encontrado"})
+    return json.dumps({"success": True, "message": "Orcamento removido"})
+
+
+def _list_budgets(_args: dict) -> str:
+    result = supabase.table("budgets").select("*").order("created_at", desc=True).execute()
+    return json.dumps({"budgets": result.data}, default=str)
+
+
+def _update_plan(args: dict) -> str:
+    pid = args.pop("plan_id")
+    if not args:
+        return json.dumps({"error": "Nenhum campo para atualizar"})
+    result = supabase.table("financial_plans").update(args).eq("id", pid).execute()
+    if not result.data:
+        return json.dumps({"error": "Plano nao encontrado"})
+    return json.dumps({"success": True, "plan": result.data[0]}, default=str)
+
+
+def _generate_recurring(_args: dict) -> str:
+    import httpx
+    try:
+        resp = httpx.post("http://localhost:8000/api/recurring/generate", timeout=30)
+        return resp.text
+    except Exception as e:
+        return json.dumps({"error": f"Erro ao gerar recorrentes: {str(e)}"})
