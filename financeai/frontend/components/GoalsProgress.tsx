@@ -39,14 +39,14 @@ export default function GoalsProgress() {
         {displayed.map((g) => {
           const pct = g.target_amount > 0 ? Math.min((g.saved_amount / g.target_amount) * 100, 100) : 0;
           return (
-            <div key={g.id} className="rounded-lg p-3 bg-[#0f1825] border border-border">
+            <div key={g.id} className="rounded-lg p-3 border border-border" style={{ background: "var(--card-inner)" }}>
               <div className="flex justify-between items-center">
                 <p className="text-sm font-medium">{g.name}</p>
                 <span className="text-xs text-muted-foreground">{pct.toFixed(0)}%</span>
               </div>
               <div className="w-full h-1 bg-border rounded-full mt-2 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[#60a5fa] transition-all"
+                  className="h-full rounded-full bg-primary transition-all"
                   style={{ width: `${pct}%` }}
                 />
               </div>

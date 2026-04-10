@@ -12,10 +12,10 @@ interface Alert {
   source: string;
 }
 
-const LEVEL_STYLES: Record<string, { bg: string; border: string; text: string }> = {
-  danger: { bg: "rgba(248,113,113,0.08)", border: "#f87171", text: "#fca5a5" },
-  warning: { bg: "rgba(251,191,36,0.06)", border: "#fbbf24", text: "#fde68a" },
-  info: { bg: "rgba(96,165,250,0.06)", border: "#60a5fa", text: "#93c5fd" },
+const LEVEL_STYLES: Record<string, { bgVar: string; borderVar: string; textVar: string }> = {
+  danger: { bgVar: "var(--status-overdue-bg)", borderVar: "var(--accent-red)", textVar: "var(--status-overdue-text)" },
+  warning: { bgVar: "var(--status-pending-bg)", borderVar: "var(--accent-amber)", textVar: "var(--status-pending-text)" },
+  info: { bgVar: "var(--status-info-bg)", borderVar: "var(--primary)", textVar: "var(--status-info-text)" },
 };
 
 export default function AlertsPanel() {
@@ -50,9 +50,9 @@ export default function AlertsPanel() {
               <div
                 key={alert.id}
                 className="p-3 rounded-lg"
-                style={{ background: style.bg, borderLeft: `3px solid ${style.border}` }}
+                style={{ background: style.bgVar, borderLeft: `3px solid ${style.borderVar}` }}
               >
-                <p className="text-sm font-semibold" style={{ color: style.text }}>{alert.message}</p>
+                <p className="text-sm font-semibold" style={{ color: style.textVar }}>{alert.message}</p>
               </div>
             );
           })}

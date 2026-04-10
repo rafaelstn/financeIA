@@ -45,11 +45,11 @@ export default function UpcomingBills() {
             <span className="text-xs uppercase tracking-wide text-muted-foreground text-right">Valor</span>
           </div>
           {bills.slice(0, 6).map((bill, i) => (
-            <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-2 py-2 border-b border-[#0f1825] last:border-0 items-center">
+            <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-2 py-2 border-b border-border/50 last:border-0 items-center">
               <div>
                 <p className="text-sm">{bill.description}</p>
                 {bill.status === "overdue" && (
-                  <span className="text-xs text-[#fca5a5]">Atrasada</span>
+                  <span className="text-xs" style={{ color: "var(--status-overdue-text)" }}>Atrasada</span>
                 )}
               </div>
               <span className="text-sm text-muted-foreground">{formatDate(bill.due_date)}</span>

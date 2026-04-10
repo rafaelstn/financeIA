@@ -63,27 +63,27 @@ export default function SpendingChart({ month, year }: Props) {
           <h3 className="text-base font-semibold">Evolucao mensal</h3>
           <div className="flex gap-3">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-sm bg-[#60a5fa]" />
+              <div className="w-2 h-2 rounded-sm bg-primary" />
               <span className="text-xs text-muted-foreground">Receitas</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-sm bg-[#f87171]" />
+              <div className="w-2 h-2 rounded-sm bg-destructive" />
               <span className="text-xs text-muted-foreground">Despesas</span>
             </div>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={yearlyData} barGap={2}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e2d4a" vertical={false} />
-            <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-            <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false}
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+            <XAxis dataKey="name" className="fill-muted-foreground" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis className="fill-muted-foreground" fontSize={10} tickLine={false} axisLine={false}
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
             <Tooltip
-              contentStyle={{ background: "#111a2e", border: "1px solid #1e2d4a", borderRadius: "8px", fontSize: "12px" }}
+              contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", fontSize: "12px", color: "var(--foreground)" }}
               formatter={(value: number) => `R$ ${fmt(value)}`}
             />
-            <Bar dataKey="receitas" fill="#60a5fa" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="despesas" fill="#f87171" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="receitas" className="fill-primary" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="despesas" className="fill-destructive" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

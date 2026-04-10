@@ -56,12 +56,12 @@ export default function SummaryCards({ month, year }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Saldo */}
         <div className="relative overflow-hidden rounded-xl p-5 border card-hover"
-          style={{ background: "linear-gradient(135deg, #0f2027, #1a3a4a)", borderColor: "#1e4a5a" }}>
+          style={{ background: "linear-gradient(135deg, var(--hero-saldo-from), var(--hero-saldo-to))", borderColor: "var(--hero-saldo-border)" }}>
           <svg className="absolute bottom-0 left-0 right-0 h-10 opacity-20" viewBox="0 0 200 40" preserveAspectRatio="none">
-            <polyline points="0,35 20,30 40,32 60,25 80,28 100,18 120,22 140,15 160,12 180,8 200,5" fill="none" stroke="#4ade80" strokeWidth="2"/>
+            <polyline points="0,35 20,30 40,32 60,25 80,28 100,18 120,22 140,15 160,12 180,8 200,5" fill="none" stroke="var(--sparkline-saldo)" strokeWidth="2"/>
           </svg>
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Saldo</p>
-          <p className={`text-3xl font-bold mt-1 relative ${data.balance >= 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
+          <p className="text-3xl font-bold mt-1 relative" style={{ color: data.balance >= 0 ? "var(--accent-green)" : "var(--accent-red)" }}>
             R$ {fmt(data.balance)}
           </p>
           <p className="text-sm text-muted-foreground mt-1.5 relative">
@@ -71,9 +71,9 @@ export default function SummaryCards({ month, year }: Props) {
 
         {/* Receitas */}
         <div className="relative overflow-hidden rounded-xl p-5 border card-hover"
-          style={{ background: "linear-gradient(135deg, #0f1a2e, #162040)", borderColor: "#1e3060" }}>
+          style={{ background: "linear-gradient(135deg, var(--hero-receitas-from), var(--hero-receitas-to))", borderColor: "var(--hero-receitas-border)" }}>
           <svg className="absolute bottom-0 left-0 right-0 h-10 opacity-15" viewBox="0 0 200 40" preserveAspectRatio="none">
-            <polyline points="0,30 30,28 60,25 90,20 120,22 150,15 200,10" fill="none" stroke="#60a5fa" strokeWidth="2"/>
+            <polyline points="0,30 30,28 60,25 90,20 120,22 150,15 200,10" fill="none" stroke="var(--sparkline-receitas)" strokeWidth="2"/>
           </svg>
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Receitas</p>
           <p className="text-3xl font-bold mt-1 relative">R$ {fmt(data.income)}</p>
@@ -82,9 +82,9 @@ export default function SummaryCards({ month, year }: Props) {
 
         {/* Despesas */}
         <div className="relative overflow-hidden rounded-xl p-5 border card-hover"
-          style={{ background: "linear-gradient(135deg, #1a0f1e, #2a1535)", borderColor: "#3a2050" }}>
+          style={{ background: "linear-gradient(135deg, var(--hero-despesas-from), var(--hero-despesas-to))", borderColor: "var(--hero-despesas-border)" }}>
           <svg className="absolute bottom-0 left-0 right-0 h-10 opacity-15" viewBox="0 0 200 40" preserveAspectRatio="none">
-            <polyline points="0,25 30,20 60,28 90,22 120,30 150,18 200,15" fill="none" stroke="#c084fc" strokeWidth="2"/>
+            <polyline points="0,25 30,20 60,28 90,22 120,30 150,18 200,15" fill="none" stroke="var(--sparkline-despesas)" strokeWidth="2"/>
           </svg>
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Despesas</p>
           <p className="text-3xl font-bold mt-1 relative">R$ {fmt(data.expenses)}</p>
@@ -101,10 +101,11 @@ export default function SummaryCards({ month, year }: Props) {
         <div className="rounded-[10px] p-3 bg-card border border-border card-hover">
           <div className="flex justify-between items-center">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Dizimo</p>
-            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
-              data.tithe_status === "paid"
-                ? "text-[#4ade80]" : "text-[#f87171]"
-            }`} style={{ background: data.tithe_status === "paid" ? "rgba(74,222,128,0.08)" : "rgba(248,113,113,0.08)" }}>
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+              style={{
+                color: data.tithe_status === "paid" ? "var(--status-paid-text)" : "var(--status-overdue-text)",
+                background: data.tithe_status === "paid" ? "var(--status-paid-bg)" : "var(--status-overdue-bg)",
+              }}>
               {data.tithe_status === "paid" ? "Pago" : "Pendente"}
             </span>
           </div>
@@ -113,10 +114,11 @@ export default function SummaryCards({ month, year }: Props) {
         <div className="rounded-[10px] p-3 bg-card border border-border card-hover">
           <div className="flex justify-between items-center">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Primicia</p>
-            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
-              data.firstfruits_status === "paid"
-                ? "text-[#4ade80]" : "text-[#f87171]"
-            }`} style={{ background: data.firstfruits_status === "paid" ? "rgba(74,222,128,0.08)" : "rgba(248,113,113,0.08)" }}>
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+              style={{
+                color: data.firstfruits_status === "paid" ? "var(--status-paid-text)" : "var(--status-overdue-text)",
+                background: data.firstfruits_status === "paid" ? "var(--status-paid-bg)" : "var(--status-overdue-bg)",
+              }}>
               {data.firstfruits_status === "paid" ? "Pago" : "Pendente"}
             </span>
           </div>
@@ -124,7 +126,7 @@ export default function SummaryCards({ month, year }: Props) {
         </div>
         <div className="rounded-[10px] p-3 bg-card border border-border card-hover">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Dividas</p>
-          <p className="text-lg font-semibold mt-1 text-[#f87171]">—</p>
+          <p className="text-lg font-semibold mt-1" style={{ color: "var(--accent-red)" }}>—</p>
           <p className="text-xs text-muted-foreground mt-0.5">ver pagina de dividas</p>
         </div>
       </div>

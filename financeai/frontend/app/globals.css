@@ -49,38 +49,72 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(0.995 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.488 0.243 264.376);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.714);
-  --chart-3: oklch(0.398 0.07 227.334);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --card-inner: #f1f5f9;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563eb;
+  --chart-1: #2563eb;
+  --chart-2: #dc2626;
+  --chart-3: #9333ea;
+  --chart-4: #d97706;
+  --chart-5: #059669;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #2563eb;
+
+  /* Status colors - light */
+  --status-paid-bg: rgba(22, 163, 74, 0.1);
+  --status-paid-text: #16a34a;
+  --status-overdue-bg: rgba(220, 38, 38, 0.1);
+  --status-overdue-text: #dc2626;
+  --status-pending-bg: rgba(217, 119, 6, 0.1);
+  --status-pending-text: #d97706;
+  --status-info-bg: rgba(37, 99, 235, 0.1);
+  --status-info-text: #2563eb;
+
+  /* Accent palette - light (darker for contrast) */
+  --accent-green: #16a34a;
+  --accent-red: #dc2626;
+  --accent-amber: #d97706;
+  --accent-purple: #9333ea;
+  --accent-emerald: #059669;
+
+  /* Hero card backgrounds - light */
+  --hero-saldo-from: #ecfdf5;
+  --hero-saldo-to: #d1fae5;
+  --hero-saldo-border: #a7f3d0;
+  --hero-receitas-from: #eff6ff;
+  --hero-receitas-to: #dbeafe;
+  --hero-receitas-border: #bfdbfe;
+  --hero-despesas-from: #faf5ff;
+  --hero-despesas-to: #f3e8ff;
+  --hero-despesas-border: #e9d5ff;
+
+  /* Sparkline colors */
+  --sparkline-saldo: #16a34a;
+  --sparkline-receitas: #2563eb;
+  --sparkline-despesas: #9333ea;
 }
 
 .dark {
@@ -154,6 +188,22 @@
   --accent-amber: #fbbf24;
   --accent-purple: #c084fc;
   --accent-emerald: #34d399;
+
+  /* Hero card backgrounds - dark */
+  --hero-saldo-from: #0f2027;
+  --hero-saldo-to: #1a3a4a;
+  --hero-saldo-border: #1e4a5a;
+  --hero-receitas-from: #0f1a2e;
+  --hero-receitas-to: #162040;
+  --hero-receitas-border: #1e3060;
+  --hero-despesas-from: #1a0f1e;
+  --hero-despesas-to: #2a1535;
+  --hero-despesas-border: #3a2050;
+
+  /* Sparkline colors */
+  --sparkline-saldo: #4ade80;
+  --sparkline-receitas: #60a5fa;
+  --sparkline-despesas: #c084fc;
 }
 
 @layer base {
