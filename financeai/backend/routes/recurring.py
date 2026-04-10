@@ -135,14 +135,14 @@ def _transaction_exists(description: str, due_date: str) -> bool:
 
 
 @router.post("/generate")
-async def generate_pending():
+async def generate_pending(months_ahead: int = 3):
     """Generate pending transactions for active recurring items.
 
     Safe against duplicates: checks if transaction already exists before creating.
-    Catches up on missed months: advances next_due_date through all past periods.
+    Catches up on missed months and generates up to N months ahead for planning.
     """
     today = date.today()
-    limit_date = today + timedelta(days=5)
+    limit_date = today + relativedelta(months=months_ahead)
 
     active = (
         supabase.table("recurring_transactions")
