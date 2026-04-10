@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Pencil, Download } from "lucide-react";
+import { Plus, Trash2, Pencil, Download, Check } from "lucide-react";
 import PageHelp from "@/components/PageHelp";
 import { helpContent } from "@/lib/help-content";
 import api from "@/lib/api";
@@ -54,7 +54,18 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [sortBy, setSortBy] = useState<string>("due_date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const perPage = 20;
+
+  const toggleSort = (col: string) => {
+    if (sortBy === col) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(col);
+      setSortDir("asc");
+    }
+  };
 
   function prevMonth() {
     if (month === 1) { setMonth(12); setYear(year - 1); }
@@ -113,6 +124,16 @@ export default function TransactionsPage() {
     }
   };
 
+  const handleMarkPaid = async (id: string) => {
+    try {
+      await api.put(`/transactions/${id}`, { status: "paid", paid_date: new Date().toISOString().slice(0, 10) });
+      toast.success("Marcado como pago");
+      load();
+    } catch {
+      toast.error("Erro na operacao");
+    }
+  };
+
   const handleEdit = (t: Transaction) => {
     setForm({
       description: t.description, amount: String(t.amount), type: t.type,
@@ -161,7 +182,16 @@ export default function TransactionsPage() {
 
   const filtered = transactions.filter(t =>
     !search || t.description.toLowerCase().includes(search.toLowerCase())
-  );
+  ).sort((a, b) => {
+    const valA = a[sortBy as keyof Transaction] ?? "";
+    const valB = b[sortBy as keyof Transaction] ?? "";
+    if (typeof valA === "number" && typeof valB === "number") {
+      return sortDir === "asc" ? valA - valB : valB - valA;
+    }
+    const strA = String(valA).toLowerCase();
+    const strB = String(valB).toLowerCase();
+    return sortDir === "asc" ? strA.localeCompare(strB) : strB.localeCompare(strA);
+  });
 
   const totalPages = Math.ceil(total / perPage);
 
@@ -263,13 +293,23 @@ export default function TransactionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead className="w-20">Ações</TableHead>
+                {[
+                  { key: "description", label: "Descrição" },
+                  { key: "amount", label: "Valor" },
+                  { key: "type", label: "Tipo" },
+                  { key: "category", label: "Categoria" },
+                  { key: "status", label: "Status" },
+                  { key: "due_date", label: "Vencimento" },
+                ].map((col) => (
+                  <TableHead
+                    key={col.key}
+                    className="cursor-pointer select-none hover:text-foreground transition-colors"
+                    onClick={() => toggleSort(col.key)}
+                  >
+                    {col.label} {sortBy === col.key && (sortDir === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                ))}
+                <TableHead className="w-24">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -285,6 +325,11 @@ export default function TransactionsPage() {
                   <TableCell>{formatDate(t.due_date)}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      {t.status !== "paid" && (
+                        <Button variant="ghost" size="icon" onClick={() => handleMarkPaid(t.id)} title="Marcar como pago">
+                          <Check className="h-4 w-4 text-emerald-500" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(t)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
