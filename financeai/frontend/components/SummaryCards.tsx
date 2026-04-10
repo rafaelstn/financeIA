@@ -26,10 +26,16 @@ function fmt(value: number): string {
 
 export default function SummaryCards({ month, year }: Props) {
   const [data, setData] = useState<Summary | null>(null);
+  const [debtsTotal, setDebtsTotal] = useState<{ total: number; count: number }>({ total: 0, count: 0 });
 
   useEffect(() => {
     setData(null);
     api.get(`/summary/monthly?month=${month}&year=${year}`).then((res) => setData(res.data));
+    api.get("/debts?status=ativa").then((res) => {
+      const debts = res.data.data || res.data;
+      const total = debts.reduce((s: number, d: { current_amount: number }) => s + d.current_amount, 0);
+      setDebtsTotal({ total, count: debts.length });
+    }).catch(() => setDebtsTotal({ total: 0, count: 0 }));
   }, [month, year]);
 
   if (!data) return (
@@ -125,9 +131,18 @@ export default function SummaryCards({ month, year }: Props) {
           <p className="text-lg font-semibold mt-1">R$ {fmt(data.firstfruits)}</p>
         </div>
         <div className="rounded-[10px] p-3 bg-card border border-border card-hover">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Dividas</p>
-          <p className="text-lg font-semibold mt-1" style={{ color: "var(--accent-red)" }}>—</p>
-          <p className="text-xs text-muted-foreground mt-0.5">ver pagina de dividas</p>
+          <div className="flex justify-between items-center">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Dividas</p>
+            {debtsTotal.count > 0 && (
+              <span className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+                style={{ color: "var(--status-overdue-text)", background: "var(--status-overdue-bg)" }}>
+                {debtsTotal.count} ativas
+              </span>
+            )}
+          </div>
+          <p className="text-lg font-semibold mt-1" style={{ color: debtsTotal.total > 0 ? "var(--accent-red)" : undefined }}>
+            R$ {fmt(debtsTotal.total)}
+          </p>
         </div>
       </div>
     </div>

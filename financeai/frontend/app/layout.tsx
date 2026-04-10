@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="dark" suppressHydrationWarning>
+    <html lang="pt-BR" className="light" suppressHydrationWarning>
       <body className={`${poppins.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
         <ThemeProvider>
           <div className="flex min-h-screen">
