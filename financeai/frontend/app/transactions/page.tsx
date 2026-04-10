@@ -239,14 +239,23 @@ export default function TransactionsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-64"
         />
-        <Select defaultValue="all" onValueChange={(v) => { setFilterType(v ?? "all"); setPage(1); }}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Todos" /></SelectTrigger>
-          <SelectContent><SelectItem value="all" label="Todos">Todos</SelectItem><SelectItem value="income" label="Receitas">Receitas</SelectItem><SelectItem value="expense" label="Despesas">Despesas</SelectItem></SelectContent>
-        </Select>
-        <Select defaultValue="all" onValueChange={(v) => { setFilterCategory(v ?? "all"); setPage(1); }}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Todas" /></SelectTrigger>
-          <SelectContent><SelectItem value="all" label="Todas">Todas</SelectItem>{CATEGORIES.map((c) => <SelectItem key={c} value={c} label={c}>{c}</SelectItem>)}</SelectContent>
-        </Select>
+        <select
+          value={filterType}
+          onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
+          className="h-8 w-40 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none"
+        >
+          <option value="all">Todos</option>
+          <option value="income">Receitas</option>
+          <option value="expense">Despesas</option>
+        </select>
+        <select
+          value={filterCategory}
+          onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}
+          className="h-8 w-40 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none"
+        >
+          <option value="all">Todas</option>
+          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
       </div>
 
       <Card>
