@@ -17,12 +17,18 @@ interface Summary {
   firstfruits_status: string;
 }
 
-export default function SummaryCards() {
+interface Props {
+  month: number;
+  year: number;
+}
+
+export default function SummaryCards({ month, year }: Props) {
   const [data, setData] = useState<Summary | null>(null);
 
   useEffect(() => {
-    api.get("/summary/monthly").then((res) => setData(res.data));
-  }, []);
+    setData(null);
+    api.get(`/summary/monthly?month=${month}&year=${year}`).then((res) => setData(res.data));
+  }, [month, year]);
 
   if (!data) return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -43,7 +49,7 @@ export default function SummaryCards() {
     { title: "Saldo do Mês", value: data.balance, icon: DollarSign, color: data.balance >= 0 ? "text-emerald-500" : "text-red-500" },
     { title: "Receitas", value: data.income, icon: TrendingUp, color: "text-emerald-500" },
     { title: "Despesas", value: data.expenses, icon: TrendingDown, color: "text-red-500" },
-    { title: "Investido", value: data.total_current, icon: PiggyBank, color: "text-blue-500" },
+    { title: "Investido", value: data.total_invested, icon: PiggyBank, color: "text-blue-500" },
     { title: "Dízimo", value: data.tithe, icon: Heart, color: "text-purple-500", status: data.tithe_status },
     { title: "Primícia", value: data.firstfruits, icon: Star, color: "text-amber-500", status: data.firstfruits_status },
   ];

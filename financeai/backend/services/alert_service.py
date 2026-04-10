@@ -25,9 +25,7 @@ def check_and_update_overdue() -> None:
 
 
 def get_active_alerts() -> list[dict]:
-    """Return active alerts. Calls check_and_update_overdue() first."""
-    check_and_update_overdue()
-
+    """Return active alerts."""
     today = date.today()
     alerts = []
 
@@ -210,5 +208,5 @@ def get_active_alerts() -> list[dict]:
 
     # Sort: danger first, then warning, then info, then by due_date
     level_order = {"danger": 0, "warning": 1, "info": 2}
-    alerts.sort(key=lambda a: (level_order.get(a["level"], 3), a.get("due_date") or ""))
+    alerts.sort(key=lambda a: (level_order.get(a["level"], 3), a.get("due_date") or "9999-12-31"))
     return alerts

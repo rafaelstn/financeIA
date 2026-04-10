@@ -1,4 +1,5 @@
 import logging
+import time
 
 from fastapi import APIRouter, HTTPException
 from database import supabase
@@ -8,6 +9,9 @@ from services.chat_tools import TOOL_DEFINITIONS, execute_tool
 from datetime import date
 
 logger = logging.getLogger("financeai.chat")
+
+_context_cache: dict = {"text": "", "timestamp": 0}
+_CACHE_TTL = 120  # 2 minutes
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -369,10 +373,20 @@ Mes atual: {m:02d}/{y}
 {plans_text}"""
 
 
+def get_financial_context() -> str:
+    now = time.time()
+    if now - _context_cache["timestamp"] < _CACHE_TTL and _context_cache["text"]:
+        return _context_cache["text"]
+    text = build_financial_context()
+    _context_cache["text"] = text
+    _context_cache["timestamp"] = now
+    return text
+
+
 @router.post("/")
 async def chat(request: ChatRequest):
     try:
-        context = build_financial_context()
+        context = get_financial_context()
         system_prompt = MENTOR_SYSTEM_PROMPT.format(context=context)
         provider = get_ai_provider()
         history = [{"role": m.role, "content": m.content} for m in request.history]
@@ -392,7 +406,7 @@ async def chat(request: ChatRequest):
         return ChatResponse(response=response_text)
     except Exception as e:
         logger.exception("Error processing chat request")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Erro ao processar mensagem. Tente novamente.")
 
 
 @router.get("/history")

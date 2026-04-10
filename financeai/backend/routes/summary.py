@@ -1,12 +1,14 @@
 from fastapi import APIRouter
 from database import supabase
-from datetime import date
+from datetime import date, timedelta
+from services.alert_service import check_and_update_overdue
 
 router = APIRouter(prefix="/api/summary", tags=["summary"])
 
 
 @router.get("/monthly")
 async def monthly_summary(month: int | None = None, year: int | None = None):
+    check_and_update_overdue()
     today = date.today()
     m = month or today.month
     y = year or today.year
@@ -45,6 +47,7 @@ async def monthly_summary(month: int | None = None, year: int | None = None):
     ).data
 
     card_totals = []
+    card_expenses_total = 0
     for inv in invoices:
         card_name = inv.get("credit_cards", {}).get("name", "Unknown") if inv.get("credit_cards") else "Unknown"
         card_totals.append({
@@ -52,6 +55,13 @@ async def monthly_summary(month: int | None = None, year: int | None = None):
             "total": inv["total_amount"],
             "status": inv["status"],
         })
+        card_expenses_total += inv["total_amount"]
+
+    # Soma faturas de cartão nas despesas e no saldo
+    expenses += card_expenses_total
+    balance = income - expenses
+    if card_expenses_total > 0:
+        by_category["Cartao"] = by_category.get("Cartao", 0) + card_expenses_total
 
     # Investments totals
     investments = supabase.table("investments").select("invested_amount, current_amount").execute().data
@@ -104,6 +114,16 @@ async def yearly_summary(year: int | None = None):
 
         income = sum(t["amount"] for t in txns if t["type"] == "income")
         expenses = sum(t["amount"] for t in txns if t["type"] == "expense")
+
+        # Soma faturas de cartão nas despesas
+        month_invoices = (
+            supabase.table("card_invoices")
+            .select("total_amount")
+            .eq("month", m)
+            .eq("year", y)
+            .execute()
+        ).data
+        expenses += sum(inv["total_amount"] for inv in month_invoices)
 
         months.append({"month": m, "income": income, "expenses": expenses})
 

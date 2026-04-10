@@ -28,7 +28,7 @@ export default function Sidebar() {
     <aside className="w-64 min-h-screen bg-card border-r border-border flex flex-col">
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
-        <div className="h-9 w-9 rounded-lg bg-blue-600 flex items-center justify-center">
+        <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
           <Wallet className="h-5 w-5 text-white" />
         </div>
         <div>
@@ -50,7 +50,7 @@ export default function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-sm"
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               }`}
             >
