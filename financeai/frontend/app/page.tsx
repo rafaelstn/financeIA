@@ -6,6 +6,7 @@ import SpendingChart from "@/components/SpendingChart";
 import GoalsProgress from "@/components/GoalsProgress";
 import UpcomingBills from "@/components/UpcomingBills";
 import AlertsPanel from "@/components/AlertsPanel";
+import PlanSummary from "@/components/PlanSummary";
 
 const MONTH_NAMES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -60,7 +61,10 @@ export default function Dashboard() {
         <AlertsPanel />
       </div>
 
-      {/* Row 5: Goals */}
+      {/* Row 5: Plan Summary */}
+      <PlanSummary month={month} year={year} />
+
+      {/* Row 6: Goals */}
       <GoalsProgress />
     </div>
   );
