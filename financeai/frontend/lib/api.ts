@@ -10,9 +10,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.code === "ECONNABORTED") {
-      console.error("Request timeout");
+      console.warn("Request timeout:", error.config?.url);
     } else if (!error.response) {
-      console.error("Network error - backend may be offline");
+      console.warn("Network error:", error.config?.url);
     }
     return Promise.reject(error);
   }
