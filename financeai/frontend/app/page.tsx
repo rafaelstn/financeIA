@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SummaryCards from "@/components/SummaryCards";
 import SpendingChart from "@/components/SpendingChart";
 import GoalsProgress from "@/components/GoalsProgress";
 import UpcomingBills from "@/components/UpcomingBills";
 import AlertsPanel from "@/components/AlertsPanel";
 import PlanSummary from "@/components/PlanSummary";
+import api from "@/lib/api";
 
 const MONTH_NAMES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -17,6 +18,14 @@ export default function Dashboard() {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
+  const generatedRef = useRef(false);
+
+  // Auto-generate recurring transactions on first load (once per session)
+  useEffect(() => {
+    if (generatedRef.current) return;
+    generatedRef.current = true;
+    api.post("/recurring/generate").catch(() => {});
+  }, []);
 
   function prev() {
     if (month === 1) { setMonth(12); setYear(year - 1); }

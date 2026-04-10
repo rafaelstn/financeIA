@@ -122,9 +122,25 @@ def _compute_next_due(current: date, frequency: str, item: dict | None = None) -
         return current + relativedelta(months=1)
 
 
+def _transaction_exists(description: str, due_date: str) -> bool:
+    """Check if a transaction with same description and due_date already exists."""
+    result = (
+        supabase.table("transactions")
+        .select("id")
+        .eq("description", description)
+        .eq("due_date", due_date)
+        .execute()
+    )
+    return len(result.data) > 0
+
+
 @router.post("/generate")
 async def generate_pending():
-    """Generate pending transactions for active recurring items due within 5 days."""
+    """Generate pending transactions for active recurring items.
+
+    Safe against duplicates: checks if transaction already exists before creating.
+    Catches up on missed months: advances next_due_date through all past periods.
+    """
     today = date.today()
     limit_date = today + timedelta(days=5)
 
@@ -132,40 +148,49 @@ async def generate_pending():
         supabase.table("recurring_transactions")
         .select("*")
         .eq("is_active", True)
-        .lte("next_due_date", str(limit_date))
         .execute()
     ).data
 
-    count = 0
+    created = 0
+    skipped = 0
+
     for item in active:
         current_due = date.fromisoformat(item["next_due_date"])
 
-        # Determine the actual due date for the transaction
-        if item.get("use_business_day") and item.get("business_day_number"):
-            actual_due = get_nth_business_day(
-                current_due.year, current_due.month, item["business_day_number"]
-            )
-        else:
-            actual_due = current_due
+        # Loop: catch up on all missed periods up to 5 days from now
+        while current_due <= limit_date:
+            # Calculate actual due date (business day aware)
+            if item.get("use_business_day") and item.get("business_day_number"):
+                actual_due = get_nth_business_day(
+                    current_due.year, current_due.month, item["business_day_number"]
+                )
+            else:
+                actual_due = current_due
 
-        # Create a transaction with status 'pending'
-        txn_data = {
-            "description": item["description"],
-            "amount": item["amount"],
-            "type": item["type"],
-            "category": item["category"],
-            "status": "pending",
-            "due_date": str(actual_due),
-            "notes": f"Gerado automaticamente (recorrente: {item['frequency']})",
-        }
-        supabase.table("transactions").insert(txn_data).execute()
+            due_str = str(actual_due)
 
-        # Advance next_due_date
-        next_due = _compute_next_due(current_due, item["frequency"], item)
+            # Check for duplicate before creating
+            if not _transaction_exists(item["description"], due_str):
+                txn_data = {
+                    "description": item["description"],
+                    "amount": item["amount"],
+                    "type": item["type"],
+                    "category": item["category"],
+                    "status": "overdue" if actual_due < today else "pending",
+                    "due_date": due_str,
+                    "notes": f"Gerado automaticamente (recorrente: {item['frequency']})",
+                }
+                supabase.table("transactions").insert(txn_data).execute()
+                created += 1
+            else:
+                skipped += 1
+
+            # Advance to next period
+            current_due = _compute_next_due(current_due, item["frequency"], item)
+
+        # Update next_due_date to the next future period
         supabase.table("recurring_transactions").update(
-            {"next_due_date": str(next_due)}
+            {"next_due_date": str(current_due)}
         ).eq("id", item["id"]).execute()
 
-        count += 1
-
-    return {"generated": count}
+    return {"generated": created, "skipped": skipped}
