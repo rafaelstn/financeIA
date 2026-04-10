@@ -324,11 +324,19 @@ export default function TransactionsPage() {
                   <TableCell>{statusBadge(t.status)}</TableCell>
                   <TableCell>{formatDate(t.due_date)}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      {t.status !== "paid" && (
-                        <Button variant="ghost" size="icon" onClick={() => handleMarkPaid(t.id)} title="Marcar como pago">
-                          <Check className="h-4 w-4 text-emerald-500" />
-                        </Button>
+                    <div className="flex gap-1 items-center">
+                      {t.status === "paid" ? (
+                        <span className="inline-flex items-center justify-center h-8 w-8 rounded-full" style={{ background: "var(--status-paid-bg)" }}>
+                          <Check className="h-4 w-4" style={{ color: "var(--status-paid-text)" }} />
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleMarkPaid(t.id)}
+                          title="Marcar como pago"
+                          className="inline-flex items-center justify-center h-8 px-2.5 rounded-md text-xs font-medium border border-border hover:border-primary hover:text-primary transition-colors"
+                        >
+                          Pagar
+                        </button>
                       )}
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(t)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)}><Trash2 className="h-4 w-4" /></Button>
