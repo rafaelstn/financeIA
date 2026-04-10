@@ -10,6 +10,13 @@ class CreditCardCreate(BaseModel):
     closing_day: int
     due_day: int
 
+    @field_validator('closing_day', 'due_day')
+    @classmethod
+    def day_must_be_valid(cls, v):
+        if v < 1 or v > 31:
+            raise ValueError('Dia deve ser entre 1 e 31')
+        return v
+
     @field_validator('limit_amount')
     @classmethod
     def limit_must_be_positive(cls, v):

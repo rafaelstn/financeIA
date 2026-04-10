@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import date, datetime
 
@@ -15,6 +15,20 @@ class RecurringCreate(BaseModel):
     use_business_day: bool = False
     business_day_number: Optional[int] = None  # e.g., 5 = 5th business day
     notes: Optional[str] = None
+
+    @field_validator('amount')
+    @classmethod
+    def amount_must_be_positive(cls, v):
+        if v <= 0:
+            raise ValueError('Valor deve ser maior que zero')
+        return v
+
+    @field_validator('business_day_number')
+    @classmethod
+    def business_day_valid_range(cls, v):
+        if v is not None and (v < 1 or v > 23):
+            raise ValueError('Dia util deve ser entre 1 e 23')
+        return v
 
 
 class RecurringUpdate(BaseModel):
