@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target } from "lucide-react";
 import Link from "next/link";
 import api from "@/lib/api";
 
@@ -14,6 +12,10 @@ interface Goal {
   status: string;
 }
 
+function fmt(value: number): string {
+  return value.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 export default function GoalsProgress() {
   const [goals, setGoals] = useState<Goal[]>([]);
 
@@ -21,57 +23,40 @@ export default function GoalsProgress() {
     api.get("/goals", { params: { status: "ativa" } }).then((res) => setGoals(res.data));
   }, []);
 
-  const displayed = goals.slice(0, 4);
+  const displayed = goals.slice(0, 3);
 
   if (displayed.length === 0) return null;
 
-  const progressColor = (pct: number) => {
-    if (pct >= 80) return "bg-emerald-500";
-    if (pct >= 50) return "bg-blue-500";
-    if (pct >= 25) return "bg-yellow-500";
-    return "bg-red-400";
-  };
-
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <Target className="h-5 w-5 text-blue-500" />
-          Progresso dos Objetivos
-        </CardTitle>
-        <Link href="/goals" className="text-sm text-blue-500 hover:underline">
-          Ver todos
+    <div className="rounded-[10px] p-4 bg-card border border-border card-hover">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="text-sm font-semibold">Metas</h3>
+        <Link href="/goals" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+          Ver todas &#8250;
         </Link>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {displayed.map((g) => {
-            const pct = g.target_amount > 0 ? Math.min((g.saved_amount / g.target_amount) * 100, 100) : 0;
-            return (
-              <div key={g.id} className="space-y-2 p-3 rounded-lg border">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium truncate">{g.name}</p>
-                  <span className="text-xs text-muted-foreground">{pct.toFixed(0)}%</span>
-                </div>
-                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${progressColor(pct)}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>
-                    R$ {g.saved_amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                  <span>
-                    R$ {g.target_amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {displayed.map((g) => {
+          const pct = g.target_amount > 0 ? Math.min((g.saved_amount / g.target_amount) * 100, 100) : 0;
+          return (
+            <div key={g.id} className="rounded-lg p-3 bg-[#0f1825] border border-border">
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-medium">{g.name}</p>
+                <span className="text-xs text-muted-foreground">{pct.toFixed(0)}%</span>
               </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+              <div className="w-full h-1 bg-border rounded-full mt-2 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[#60a5fa] transition-all"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                R$ {fmt(g.saved_amount)} / R$ {fmt(g.target_amount)}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
