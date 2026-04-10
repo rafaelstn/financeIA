@@ -280,15 +280,23 @@ def build_financial_context() -> str:
         all_recurring = supabase.table("recurring_transactions").select("*").eq("is_active", True).execute().data
     except Exception:
         all_recurring = []
-    recurring_count = len(all_recurring)
-    recurring_expense_total = sum(r["amount"] for r in all_recurring if r["type"] == "expense")
-    recurring_detail_lines = [
-        f"  - {r['description']} R$ {r['amount']:.2f} ({r['frequency']})"
-        for r in all_recurring
+    recurring_incomes = [r for r in all_recurring if r["type"] == "income"]
+    recurring_expenses = [r for r in all_recurring if r["type"] == "expense"]
+    recurring_income_total = sum(r["amount"] for r in recurring_incomes)
+    recurring_expense_total = sum(r["amount"] for r in recurring_expenses)
+    recurring_income_lines = [
+        f"  - {r['description']}: R$ {r['amount']:.2f} ({r['frequency']})"
+        for r in recurring_incomes
+    ]
+    recurring_expense_lines = [
+        f"  - {r['description']}: R$ {r['amount']:.2f} ({r['frequency']})"
+        for r in recurring_expenses
     ]
     recurring_text = (
-        f"- Contas fixas mensais: {recurring_count} (total despesas: R$ {recurring_expense_total:.2f})\n"
-        f"- Detalhes:\n" + ("\n".join(recurring_detail_lines) if recurring_detail_lines else "  Nenhuma conta recorrente")
+        f"- Receitas fixas mensais: {len(recurring_incomes)} (total: R$ {recurring_income_total:.2f})\n"
+        + ("\n".join(recurring_income_lines) if recurring_income_lines else "  Nenhuma receita recorrente") + "\n"
+        f"- Despesas fixas mensais: {len(recurring_expenses)} (total: R$ {recurring_expense_total:.2f})\n"
+        + ("\n".join(recurring_expense_lines) if recurring_expense_lines else "  Nenhuma despesa recorrente")
     )
 
     # Budgets
