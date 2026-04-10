@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Circle, AlertTriangle, PiggyBank, ShoppingCart, Banknote, Wallet, Trophy, Target, TrendingDown, Shield, Flame } from "lucide-react";
+import { CheckCircle2, Circle, AlertTriangle, PiggyBank, ShoppingCart, Banknote, Wallet, Trophy, Target, TrendingDown, Shield } from "lucide-react";
+import { toast } from "sonner";
 import api from "@/lib/api";
 
 interface PlanItem {
@@ -289,18 +290,62 @@ export default function PlanView({ plan }: { plan: Plan }) {
                   const isPaid = match?.status === "paid";
                   const isOverdue = match?.status === "overdue";
                   const isPending = match?.status === "pending";
+                  const hasTransaction = !!match;
+
+                  const handleComplete = async () => {
+                    if (hasTransaction && !isPaid) {
+                      // Mark existing transaction as paid
+                      try {
+                        await api.put(`/transactions/${match.id}`, { status: "paid", paid_date: new Date().toISOString().slice(0, 10) });
+                        toast.success(`${item.description} marcado como pago!`);
+                        // Refresh transactions
+                        const res = await api.get("/transactions", { params: { month: plan.month, year: plan.year, per_page: 100 } });
+                        setTransactions(res.data.data || res.data);
+                      } catch { toast.error("Erro ao marcar como pago"); }
+                    } else if (!hasTransaction) {
+                      // Create transaction as paid
+                      const category = section.category === "dividas" ? "Outros"
+                        : section.category === "reserva" ? "Investimento"
+                        : section.category === "sobra" ? "Outros"
+                        : item.description.toLowerCase().includes("dizimo") ? "Dizimo"
+                        : item.description.toLowerCase().includes("primicia") ? "Primicia"
+                        : "Outros";
+                      const type = section.category === "sobra" && (item.description.toLowerCase().includes("carro") || item.description.toLowerCase().includes("tv") || item.description.toLowerCase().includes("congresso") || item.description.toLowerCase().includes("tratamento") || item.description.toLowerCase().includes("investimento"))
+                        ? "expense" : "expense";
+                      try {
+                        await api.post("/transactions", {
+                          description: item.description,
+                          amount: item.amount,
+                          type: "expense",
+                          category,
+                          status: "paid",
+                          paid_date: new Date().toISOString().slice(0, 10),
+                          due_date: new Date().toISOString().slice(0, 10),
+                          notes: `Concluido via planejamento ${plan.month}/${plan.year}`,
+                        });
+                        toast.success(`${item.description} concluido!`);
+                        const res = await api.get("/transactions", { params: { month: plan.month, year: plan.year, per_page: 100 } });
+                        setTransactions(res.data.data || res.data);
+                      } catch { toast.error("Erro ao concluir"); }
+                    }
+                  };
 
                   return (
                     <div
                       key={i}
                       className={`flex items-center gap-3 px-4 py-3 transition-all ${isPaid ? "opacity-50" : ""}`}
                     >
+                      {/* Status icon / action button */}
                       {isPaid ? (
                         <CheckCircle2 className="h-5 w-5 flex-shrink-0" style={{ color: "var(--accent-green)" }} />
                       ) : isOverdue ? (
-                        <AlertTriangle className="h-5 w-5 flex-shrink-0" style={{ color: "var(--accent-red)" }} />
+                        <button onClick={handleComplete} title="Marcar como pago" className="flex-shrink-0 hover:scale-110 transition-transform">
+                          <AlertTriangle className="h-5 w-5" style={{ color: "var(--accent-red)" }} />
+                        </button>
                       ) : (
-                        <Circle className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                        <button onClick={handleComplete} title={hasTransaction ? "Marcar como pago" : "Concluir missao"} className="flex-shrink-0 hover:scale-110 transition-transform">
+                          <Circle className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
+                        </button>
                       )}
 
                       <div className="flex-1 min-w-0">
@@ -312,13 +357,23 @@ export default function PlanView({ plan }: { plan: Plan }) {
                         )}
                       </div>
 
-                      <div className="text-right flex-shrink-0">
-                        <p className={`text-sm font-semibold ${isPaid ? "text-muted-foreground line-through" : ""}`}>
-                          R$ {fmt(item.amount)}
-                        </p>
-                        {isPaid && <span className="text-[10px] font-medium" style={{ color: "var(--status-paid-text)" }}>Pago</span>}
-                        {isOverdue && <span className="text-[10px] font-medium" style={{ color: "var(--status-overdue-text)" }}>Atrasado</span>}
-                        {isPending && <span className="text-[10px] font-medium" style={{ color: "var(--status-pending-text)" }}>Pendente</span>}
+                      <div className="text-right flex-shrink-0 flex items-center gap-2">
+                        <div>
+                          <p className={`text-sm font-semibold ${isPaid ? "text-muted-foreground line-through" : ""}`}>
+                            R$ {fmt(item.amount)}
+                          </p>
+                          {isPaid && <span className="text-[10px] font-medium" style={{ color: "var(--status-paid-text)" }}>Concluido</span>}
+                          {isOverdue && <span className="text-[10px] font-medium" style={{ color: "var(--status-overdue-text)" }}>Atrasado</span>}
+                          {isPending && <span className="text-[10px] font-medium" style={{ color: "var(--status-pending-text)" }}>Pendente</span>}
+                        </div>
+                        {!isPaid && (
+                          <button
+                            onClick={handleComplete}
+                            className="text-xs px-2 py-1 rounded-md border border-border hover:border-primary hover:text-primary transition-colors"
+                          >
+                            {hasTransaction ? "Pagar" : "Concluir"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
