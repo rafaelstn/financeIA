@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -254,8 +254,8 @@ export default function CreditCardsPage() {
                   </TableHeader>
                   <TableBody>
                     {(invoices[card.id] || []).map((inv) => (
-                      <>
-                        <TableRow key={inv.id} className="cursor-pointer" onClick={() => toggleInvoice(card.id, inv.id)}>
+                      <React.Fragment key={inv.id}>
+                        <TableRow className="cursor-pointer" onClick={() => toggleInvoice(card.id, inv.id)}>
                           <TableCell className="flex items-center gap-2">
                             {expandedInvoice === inv.id ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                             {inv.month}/{inv.year}
@@ -297,7 +297,7 @@ export default function CreditCardsPage() {
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
