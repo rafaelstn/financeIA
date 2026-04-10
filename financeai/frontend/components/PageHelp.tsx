@@ -1,7 +1,6 @@
 "use client";
 
 import { HelpCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -20,10 +19,10 @@ interface PageHelpProps {
 export default function PageHelp({ title, description, steps, tips }: PageHelpProps) {
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full">
-          <HelpCircle className="h-4 w-4" />
-        </Button>
+      <DialogTrigger
+        className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-input bg-transparent hover:bg-accent hover:text-accent-foreground transition-colors"
+      >
+        <HelpCircle className="h-4 w-4" />
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
