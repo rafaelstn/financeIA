@@ -330,19 +330,114 @@ def build_financial_context() -> str:
     plan_lines = []
     for p in plans:
         plan_lines.append(f"  - {p['title']} | Status: {p['status']}")
+        if p.get("content") and p["content"].get("sections"):
+            for s in p["content"]["sections"]:
+                plan_lines.append(f"    {s['title']}: R$ {s['total']:.2f}")
+                for item in s.get("items", []):
+                    plan_lines.append(f"      - {item['description']}: R$ {item['amount']:.2f}")
         if p.get("observations"):
             plan_lines.append(f"    Obs: {p['observations']}")
     plans_text = "\n".join(plan_lines) if plan_lines else "  Nenhum plano cadastrado"
 
+    # Projection: next 3 months with detailed breakdown
+    from dateutil.relativedelta import relativedelta
+    month_names = ["Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
+                   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+    projection_lines = []
+    for offset in range(1, 4):
+        proj_date = today + relativedelta(months=offset)
+        pm, py = proj_date.month, proj_date.year
+        p_start = f"{py}-{pm:02d}-01"
+        p_end_month = pm + 1 if pm < 12 else 1
+        p_end_year = py if pm < 12 else py + 1
+        p_end = f"{p_end_year}-{p_end_month:02d}-01"
+
+        try:
+            future_txns = (
+                supabase.table("transactions")
+                .select("description, amount, type, category, status, due_date")
+                .gte("due_date", p_start)
+                .lt("due_date", p_end)
+                .order("due_date")
+                .execute()
+            ).data
+        except Exception:
+            future_txns = []
+
+        f_income = sum(t["amount"] for t in future_txns if t["type"] == "income")
+        f_expenses = sum(t["amount"] for t in future_txns if t["type"] == "expense")
+        f_balance = f_income - f_expenses
+
+        projection_lines.append(f"\n  [{month_names[pm - 1]} {py}] Receitas: R$ {f_income:.2f} | Despesas: R$ {f_expenses:.2f} | Saldo: R$ {f_balance:.2f}")
+
+        # Group by category for expenses
+        f_by_cat: dict[str, float] = {}
+        for t in future_txns:
+            if t["type"] == "expense":
+                f_by_cat[t["category"]] = f_by_cat.get(t["category"], 0) + t["amount"]
+        for cat, val in sorted(f_by_cat.items(), key=lambda x: -x[1]):
+            projection_lines.append(f"    {cat}: R$ {val:.2f}")
+
+        # List income sources
+        income_sources = [t for t in future_txns if t["type"] == "income"]
+        if income_sources:
+            projection_lines.append("    Fontes de renda:")
+            for t in income_sources:
+                projection_lines.append(f"      - {t['description']}: R$ {t['amount']:.2f}")
+
+    projection_text = "\n".join(projection_lines) if projection_lines else "  Sem projecao (transacoes futuras nao geradas)"
+
+    # Historical: last 3 months summary for trend analysis
+    history_lines = []
+    for offset in range(1, 4):
+        hist_date = today - relativedelta(months=offset)
+        hm, hy = hist_date.month, hist_date.year
+        h_start = f"{hy}-{hm:02d}-01"
+        h_end_month = hm + 1 if hm < 12 else 1
+        h_end_year = hy if hm < 12 else hy + 1
+        h_end = f"{h_end_year}-{h_end_month:02d}-01"
+
+        try:
+            hist_txns = (
+                supabase.table("transactions")
+                .select("amount, type")
+                .gte("due_date", h_start)
+                .lt("due_date", h_end)
+                .execute()
+            ).data
+        except Exception:
+            hist_txns = []
+
+        h_income = sum(t["amount"] for t in hist_txns if t["type"] == "income")
+        h_expenses = sum(t["amount"] for t in hist_txns if t["type"] == "expense")
+        h_balance = h_income - h_expenses
+        history_lines.append(f"  {month_names[hm - 1]} {hy}: Receitas R$ {h_income:.2f} | Despesas R$ {h_expenses:.2f} | Saldo R$ {h_balance:.2f}")
+
+    history_text = "\n".join(history_lines) if history_lines else "  Sem historico"
+
+    # Debt payment schedule
+    debt_schedule_lines = []
+    paying_debts = [d for d in all_debts if d.get("is_paying") and d.get("monthly_payment")]
+    for d in paying_debts:
+        remaining = d.get("total_installments", 0) - d.get("paid_installments", 0)
+        months_left = remaining if remaining > 0 else 0
+        line = f"  - {d['creditor']}: R$ {d['monthly_payment']:.2f}/mes"
+        if d.get("total_installments"):
+            line += f" | {d['paid_installments']}/{d['total_installments']} parcelas pagas | {months_left} restantes"
+        if d.get("payment_day"):
+            line += f" | Dia {d['payment_day']}"
+        debt_schedule_lines.append(line)
+    debt_schedule_text = "\n".join(debt_schedule_lines) if debt_schedule_lines else "  Nenhum pagamento de divida ativo"
+
     return f"""Data de hoje: {today.isoformat()}
 Mes atual: {m:02d}/{y}
 
-### Resumo do Mes
+### Resumo do Mes Atual ({month_names[m - 1]} {y})
 - Receitas: R$ {income:.2f}
 - Despesas: R$ {expenses:.2f}
 - Saldo: R$ {balance:.2f}
 
-### Despesas por Categoria
+### Despesas por Categoria (Mes Atual)
 {cat_text}
 
 ### Contas Vencidas ({overdue_count} — total: R$ {overdue_total:.2f})
@@ -350,6 +445,12 @@ Mes atual: {m:02d}/{y}
 
 ### Ultimas 10 Transacoes
 {recent_text}
+
+### Historico dos Ultimos 3 Meses (Tendencia)
+{history_text}
+
+### Projecao dos Proximos 3 Meses (Baseado em recorrentes + lancamentos futuros)
+{projection_text}
 
 ### Investimentos (Total investido: R$ {invested:.2f} | Valor atual: R$ {current:.2f})
 {inv_text}
@@ -360,6 +461,9 @@ Mes atual: {m:02d}/{y}
 ### Dividas
 {debts_text}
 
+### Cronograma de Pagamento de Dividas
+{debt_schedule_text}
+
 ### Objetivos e Metas
 {goals_text}
 
@@ -369,7 +473,7 @@ Mes atual: {m:02d}/{y}
 ### Orcamentos por Categoria
 {budgets_text}
 
-### Planejamento Financeiro
+### Planejamento Financeiro (Ultimos planos)
 {plans_text}"""
 
 
