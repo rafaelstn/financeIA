@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,16 +30,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Trash2, Pencil, Play } from "lucide-react";
+import PageHelp from "@/components/PageHelp";
+import { helpContent } from "@/lib/help-content";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 const CATEGORIES: Record<string, string> = {
-  Alimentacao: "Alimentacao",
+  Alimentacao: "Alimentação",
   Moradia: "Moradia",
   Transporte: "Transporte",
-  Saude: "Saude",
+  Saude: "Saúde",
   Lazer: "Lazer",
-  Educacao: "Educacao",
-  Salario: "Salario",
+  Educacao: "Educação",
+  Salario: "Salário",
   Freelance: "Freelance",
   Investimento: "Investimento",
   Outros: "Outros",
@@ -123,14 +127,20 @@ export default function RecurringPage() {
     if (form.day_of_month) data.day_of_month = parseInt(form.day_of_month);
     if (form.notes) data.notes = form.notes;
 
-    if (editingId) {
-      await api.put(`/recurring/${editingId}`, data);
-    } else {
-      await api.post("/recurring", data);
+    try {
+      if (editingId) {
+        await api.put(`/recurring/${editingId}`, data);
+        toast.success("Atualizado com sucesso");
+      } else {
+        await api.post("/recurring", data);
+        toast.success("Criado com sucesso");
+      }
+      setOpen(false);
+      resetForm();
+      load();
+    } catch {
+      toast.error("Erro na operacao");
     }
-    setOpen(false);
-    resetForm();
-    load();
   };
 
   const handleEdit = (item: RecurringTransaction) => {
@@ -151,13 +161,23 @@ export default function RecurringPage() {
   };
 
   const handleDelete = async (id: string) => {
-    await api.delete(`/recurring/${id}`);
-    load();
+    try {
+      await api.delete(`/recurring/${id}`);
+      toast.success("Removido com sucesso");
+      load();
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const handleToggleActive = async (item: RecurringTransaction) => {
-    await api.put(`/recurring/${item.id}`, { is_active: !item.is_active });
-    load();
+    try {
+      await api.put(`/recurring/${item.id}`, { is_active: !item.is_active });
+      toast.success("Atualizado com sucesso");
+      load();
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const handleGenerate = async () => {
@@ -166,6 +186,9 @@ export default function RecurringPage() {
     try {
       const res = await api.post("/recurring/generate");
       setGeneratedCount(res.data.generated);
+      toast.success("Pendentes gerados com sucesso");
+    } catch {
+      toast.error("Erro na operacao");
     } finally {
       setGenerating(false);
     }
@@ -182,7 +205,10 @@ export default function RecurringPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Transacoes Recorrentes</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold">Transações Recorrentes</h2>
+          <PageHelp {...helpContent.recurring} />
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleGenerate} disabled={generating}>
             <Play className="h-4 w-4 mr-2" />
@@ -202,12 +228,12 @@ export default function RecurringPage() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {editingId ? "Editar" : "Nova"} Transacao Recorrente
+                  {editingId ? "Editar" : "Nova"} Transação Recorrente
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                 <div>
-                  <Label>Descricao</Label>
+                  <Label>Descrição</Label>
                   <Input
                     value={form.description}
                     onChange={(e) =>
@@ -269,7 +295,7 @@ export default function RecurringPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Frequencia</Label>
+                    <Label>Frequência</Label>
                     <Select
                       value={form.frequency}
                       onValueChange={(v) =>
@@ -308,12 +334,12 @@ export default function RecurringPage() {
                   <Label className="cursor-pointer" onClick={() =>
                     setForm({ ...form, use_business_day: !form.use_business_day })
                   }>
-                    Usar dia util do mes
+                    Usar dia útil do mês
                   </Label>
                 </div>
                 {form.use_business_day ? (
                   <div>
-                    <Label>Qual dia util? (ex: 5 = 5o dia util)</Label>
+                    <Label>Qual dia útil? (ex: 5 = 5º dia útil)</Label>
                     <Input
                       type="number"
                       min="1"
@@ -328,7 +354,7 @@ export default function RecurringPage() {
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Dia do Mes</Label>
+                      <Label>Dia do Mês</Label>
                       <Input
                         type="number"
                         min="1"
@@ -340,7 +366,7 @@ export default function RecurringPage() {
                       />
                     </div>
                     <div>
-                      <Label>Proximo Vencimento</Label>
+                      <Label>Próximo Vencimento</Label>
                       <Input
                         type="date"
                         value={form.next_due_date}
@@ -352,7 +378,7 @@ export default function RecurringPage() {
                   </div>
                 )}
                 <div>
-                  <Label>Observacoes</Label>
+                  <Label>Observações</Label>
                   <Input
                     value={form.notes}
                     onChange={(e) =>
@@ -372,8 +398,8 @@ export default function RecurringPage() {
       {generatedCount !== null && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md text-emerald-700 text-sm">
           {generatedCount > 0
-            ? `${generatedCount} transacao(oes) pendente(s) gerada(s) com sucesso!`
-            : "Nenhuma transacao pendente para gerar no momento."}
+            ? `${generatedCount} transação(ões) pendente(s) gerada(s) com sucesso!`
+            : "Nenhuma transação pendente para gerar no momento."}
         </div>
       )}
 
@@ -427,14 +453,14 @@ export default function RecurringPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Descricao</TableHead>
+                <TableHead>Descrição</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead>Frequencia</TableHead>
-                <TableHead>Proximo Vencimento</TableHead>
+                <TableHead>Frequência</TableHead>
+                <TableHead>Próximo Vencimento</TableHead>
                 <TableHead>Ativo?</TableHead>
-                <TableHead className="w-20">Acoes</TableHead>
+                <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -473,13 +499,13 @@ export default function RecurringPage() {
                   <TableCell>
                     {item.use_business_day && item.business_day_number ? (
                       <span>
-                        {item.business_day_number}o dia util
+                        {item.business_day_number}º dia útil
                         <span className="text-muted-foreground text-xs ml-1">
-                          ({item.next_due_date})
+                          ({formatDate(item.next_due_date)})
                         </span>
                       </span>
                     ) : (
-                      item.next_due_date || "-"
+                      formatDate(item.next_due_date)
                     )}
                   </TableCell>
                   <TableCell>

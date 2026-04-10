@@ -20,15 +20,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import PageHelp from "@/components/PageHelp";
+import { helpContent } from "@/lib/help-content";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 const CATEGORIES: Record<string, string> = {
-  Alimentacao: "Alimentacao",
+  Alimentacao: "Alimentação",
   Moradia: "Moradia",
   Transporte: "Transporte",
-  Saude: "Saude",
+  Saude: "Saúde",
   Lazer: "Lazer",
-  Educacao: "Educacao",
+  Educacao: "Educação",
   Outros: "Outros",
 };
 
@@ -95,14 +98,20 @@ export default function BudgetsPage() {
       monthly_limit: parseFloat(form.monthly_limit),
     };
 
-    if (editingId) {
-      await api.put(`/budgets/${editingId}`, data);
-    } else {
-      await api.post("/budgets", data);
+    try {
+      if (editingId) {
+        await api.put(`/budgets/${editingId}`, data);
+        toast.success("Atualizado com sucesso");
+      } else {
+        await api.post("/budgets", data);
+        toast.success("Criado com sucesso");
+      }
+      setOpen(false);
+      resetForm();
+      load();
+    } catch {
+      toast.error("Erro na operacao");
     }
-    setOpen(false);
-    resetForm();
-    load();
   };
 
   const handleEdit = (b: Budget) => {
@@ -115,8 +124,13 @@ export default function BudgetsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    await api.delete(`/budgets/${id}`);
-    load();
+    try {
+      await api.delete(`/budgets/${id}`);
+      toast.success("Removido com sucesso");
+      load();
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const totalLimit = statusList.reduce((s, b) => s + b.monthly_limit, 0);
@@ -126,7 +140,10 @@ export default function BudgetsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Orcamentos por Categoria</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold">Orçamentos por Categoria</h2>
+          <PageHelp {...helpContent.budgets} />
+        </div>
         <Dialog
           open={open}
           onOpenChange={(v) => {
@@ -136,12 +153,12 @@ export default function BudgetsPage() {
         >
           <DialogTrigger render={<Button />}>
             <Plus className="h-4 w-4 mr-2" />
-            Novo Orcamento
+            Novo Orçamento
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingId ? "Editar" : "Novo"} Orcamento
+                {editingId ? "Editar" : "Novo"} Orçamento
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
@@ -313,7 +330,7 @@ export default function BudgetsPage() {
 
       {statusList.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          Nenhum orcamento definido. Clique em "Novo Orcamento" para comecar.
+          Nenhum orçamento definido. Clique em "Novo Orçamento" para começar.
         </div>
       )}
     </div>

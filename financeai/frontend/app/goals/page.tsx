@@ -21,7 +21,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Trash2, Pencil, PiggyBank, Target } from "lucide-react";
+import PageHelp from "@/components/PageHelp";
+import { helpContent } from "@/lib/help-content";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 const CATEGORIES: Record<string, string> = {
   eletronico: "Eletrônico",
@@ -110,14 +113,20 @@ export default function GoalsPage() {
     if (form.target_date) data.target_date = form.target_date;
     if (form.notes) data.notes = form.notes;
 
-    if (editingId) {
-      await api.put(`/goals/${editingId}`, data);
-    } else {
-      await api.post("/goals", data);
+    try {
+      if (editingId) {
+        await api.put(`/goals/${editingId}`, data);
+        toast.success("Atualizado com sucesso");
+      } else {
+        await api.post("/goals", data);
+        toast.success("Criado com sucesso");
+      }
+      setOpen(false);
+      resetForm();
+      load();
+    } catch {
+      toast.error("Erro na operacao");
     }
-    setOpen(false);
-    resetForm();
-    load();
   };
 
   const handleEdit = (g: Goal) => {
@@ -137,19 +146,29 @@ export default function GoalsPage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Tem certeza que deseja excluir?")) return;
-    await api.delete(`/goals/${id}`);
-    load();
+    try {
+      await api.delete(`/goals/${id}`);
+      toast.success("Removido com sucesso");
+      load();
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const handleSave = async (goalId: string, currentSaved: number) => {
     const addAmount = parseFloat(saveAmount);
     if (!addAmount || addAmount <= 0) return;
-    await api.put(`/goals/${goalId}`, {
-      saved_amount: currentSaved + addAmount,
-    });
-    setSavingGoalId(null);
-    setSaveAmount("");
-    load();
+    try {
+      await api.put(`/goals/${goalId}`, {
+        saved_amount: currentSaved + addAmount,
+      });
+      toast.success("Atualizado com sucesso");
+      setSavingGoalId(null);
+      setSaveAmount("");
+      load();
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const priorityBadge = (priority: string) => {
@@ -194,7 +213,10 @@ export default function GoalsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Objetivos</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold">Objetivos</h2>
+          <PageHelp {...helpContent.goals} />
+        </div>
         <Dialog
           open={open}
           onOpenChange={(v) => {
@@ -223,7 +245,7 @@ export default function GoalsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Valor Necessario</Label>
+                  <Label>Valor Necessário</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -322,7 +344,7 @@ export default function GoalsPage() {
                 </div>
               </div>
               <div>
-                <Label>Observacoes</Label>
+                <Label>Observações</Label>
                 <Input
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -354,7 +376,7 @@ export default function GoalsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">
-              Valor Total Necessario
+              Valor Total Necessário
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -438,7 +460,7 @@ export default function GoalsPage() {
             <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Nenhum objetivo cadastrado ainda.</p>
             <p className="text-sm">
-              Clique em &quot;Novo Objetivo&quot; para comecar!
+              Clique em &quot;Novo Objetivo&quot; para começar!
             </p>
           </CardContent>
         </Card>

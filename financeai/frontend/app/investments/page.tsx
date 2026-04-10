@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDate } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Pencil } from "lucide-react";
+import PageHelp from "@/components/PageHelp";
+import { helpContent } from "@/lib/help-content";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 interface Investment {
   id: string;
@@ -49,14 +53,20 @@ export default function InvestmentsPage() {
     if (form.maturity_date) data.maturity_date = form.maturity_date;
     if (form.notes) data.notes = form.notes;
 
-    if (editingId) {
-      await api.put(`/investments/${editingId}`, data);
-    } else {
-      await api.post("/investments", data);
+    try {
+      if (editingId) {
+        await api.put(`/investments/${editingId}`, data);
+        toast.success("Atualizado com sucesso");
+      } else {
+        await api.post("/investments", data);
+        toast.success("Criado com sucesso");
+      }
+      setOpen(false);
+      resetForm();
+      load();
+    } catch {
+      toast.error("Erro na operacao");
     }
-    setOpen(false);
-    resetForm();
-    load();
   };
 
   const handleEdit = (inv: Investment) => {
@@ -71,8 +81,13 @@ export default function InvestmentsPage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Tem certeza que deseja excluir?")) return;
-    await api.delete(`/investments/${id}`);
-    load();
+    try {
+      await api.delete(`/investments/${id}`);
+      toast.success("Removido com sucesso");
+      load();
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const totalInvested = investments.reduce((s, i) => s + i.invested_amount, 0);
@@ -83,7 +98,10 @@ export default function InvestmentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Investimentos</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold">Investimentos</h2>
+          <PageHelp {...helpContent.investments} />
+        </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger render={<Button />}><Plus className="h-4 w-4 mr-2" />Adicionar</DialogTrigger>
           <DialogContent>
@@ -91,8 +109,8 @@ export default function InvestmentsPage() {
             <div className="space-y-4">
               <div><Label>Nome</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>Tipo</Label><Input value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="CDB, Acoes, FII..." /></div>
-                <div><Label>Instituicao</Label><Input value={form.institution} onChange={(e) => setForm({ ...form, institution: e.target.value })} /></div>
+                <div><Label>Tipo</Label><Input value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="CDB, Ações, FII..." /></div>
+                <div><Label>Instituição</Label><Input value={form.institution} onChange={(e) => setForm({ ...form, institution: e.target.value })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Valor Investido</Label><Input type="number" step="0.01" value={form.invested_amount} onChange={(e) => setForm({ ...form, invested_amount: e.target.value })} /></div>
@@ -102,7 +120,7 @@ export default function InvestmentsPage() {
                 <div><Label>Data Inicio</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} /></div>
                 <div><Label>Vencimento</Label><Input type="date" value={form.maturity_date} onChange={(e) => setForm({ ...form, maturity_date: e.target.value })} /></div>
               </div>
-              <div><Label>Observacoes</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+              <div><Label>Observações</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
               <Button className="w-full" onClick={handleSubmit}>{editingId ? "Salvar" : "Criar"}</Button>
             </div>
           </DialogContent>
@@ -122,12 +140,12 @@ export default function InvestmentsPage() {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Tipo</TableHead>
-                <TableHead>Instituicao</TableHead>
+                <TableHead>Instituição</TableHead>
                 <TableHead>Investido</TableHead>
                 <TableHead>Atual</TableHead>
                 <TableHead>Retorno</TableHead>
                 <TableHead>Inicio</TableHead>
-                <TableHead className="w-20">Acoes</TableHead>
+                <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -143,7 +161,7 @@ export default function InvestmentsPage() {
                     <TableCell className={ret >= 0 ? "text-emerald-500" : "text-red-500"}>
                       R$ {ret.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
-                    <TableCell>{inv.start_date}</TableCell>
+                    <TableCell>{formatDate(inv.start_date)}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(inv)}><Pencil className="h-4 w-4" /></Button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,11 +30,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Trash2, Pencil } from "lucide-react";
+import PageHelp from "@/components/PageHelp";
+import { helpContent } from "@/lib/help-content";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 const CATEGORIES: Record<string, string> = {
-  cartao: "Cartao",
-  emprestimo: "Emprestimo",
+  cartao: "Cartão",
+  emprestimo: "Empréstimo",
   financiamento: "Financiamento",
   cheque_especial: "Cheque Especial",
   conta_consumo: "Conta de Consumo",
@@ -122,14 +126,20 @@ export default function DebtsPage() {
       data.total_installments = parseInt(form.total_installments);
     if (form.notes) data.notes = form.notes;
 
-    if (editingId) {
-      await api.put(`/debts/${editingId}`, data);
-    } else {
-      await api.post("/debts", data);
+    try {
+      if (editingId) {
+        await api.put(`/debts/${editingId}`, data);
+        toast.success("Atualizado com sucesso");
+      } else {
+        await api.post("/debts", data);
+        toast.success("Criado com sucesso");
+      }
+      setOpen(false);
+      resetForm();
+      load();
+    } catch {
+      toast.error("Erro na operacao");
     }
-    setOpen(false);
-    resetForm();
-    load();
   };
 
   const handleEdit = (d: Debt) => {
@@ -153,8 +163,13 @@ export default function DebtsPage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Tem certeza que deseja excluir?")) return;
-    await api.delete(`/debts/${id}`);
-    load();
+    try {
+      await api.delete(`/debts/${id}`);
+      toast.success("Removido com sucesso");
+      load();
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const statusBadge = (status: string) => {
@@ -189,7 +204,10 @@ export default function DebtsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Dividas</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold">Dívidas</h2>
+          <PageHelp {...helpContent.debts} />
+        </div>
         <Dialog
           open={open}
           onOpenChange={(v) => {
@@ -203,7 +221,7 @@ export default function DebtsPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingId ? "Editar" : "Nova"} Divida</DialogTitle>
+              <DialogTitle>{editingId ? "Editar" : "Nova"} Dívida</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
               <div>
@@ -347,7 +365,7 @@ export default function DebtsPage() {
                 </div>
               </div>
               <div>
-                <Label>Observacoes</Label>
+                <Label>Observações</Label>
                 <Input
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -366,7 +384,7 @@ export default function DebtsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">
-              Dividas Ativas
+              Dívidas Ativas
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -462,7 +480,7 @@ export default function DebtsPage() {
                 <TableHead>Origem</TableHead>
                 <TableHead>Pagando?</TableHead>
                 <TableHead>Parcela</TableHead>
-                <TableHead className="w-20">Acoes</TableHead>
+                <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -483,8 +501,8 @@ export default function DebtsPage() {
                   </TableCell>
                   <TableCell>{CATEGORIES[d.category] || d.category}</TableCell>
                   <TableCell>{statusBadge(d.status)}</TableCell>
-                  <TableCell>{d.origin_date || "-"}</TableCell>
-                  <TableCell>{d.is_paying ? "Sim" : "Nao"}</TableCell>
+                  <TableCell>{formatDate(d.origin_date)}</TableCell>
+                  <TableCell>{d.is_paying ? "Sim" : "Não"}</TableCell>
                   <TableCell>
                     {d.monthly_payment
                       ? `R$ ${d.monthly_payment.toLocaleString("pt-BR", {

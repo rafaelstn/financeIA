@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Pencil, Download } from "lucide-react";
+import PageHelp from "@/components/PageHelp";
+import { helpContent } from "@/lib/help-content";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 const CATEGORIES = [
   "Alimentacao", "Moradia", "Transporte", "Saude", "Lazer",
@@ -73,14 +77,20 @@ export default function TransactionsPage() {
     if (form.paid_date) data.paid_date = form.paid_date;
     if (form.notes) data.notes = form.notes;
 
-    if (editingId) {
-      await api.put(`/transactions/${editingId}`, data);
-    } else {
-      await api.post("/transactions", data);
+    try {
+      if (editingId) {
+        await api.put(`/transactions/${editingId}`, data);
+        toast.success("Atualizado com sucesso");
+      } else {
+        await api.post("/transactions", data);
+        toast.success("Criado com sucesso");
+      }
+      setOpen(false);
+      resetForm();
+      load();
+    } catch {
+      toast.error("Erro na operacao");
     }
-    setOpen(false);
-    resetForm();
-    load();
   };
 
   const handleEdit = (t: Transaction) => {
@@ -95,14 +105,19 @@ export default function TransactionsPage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Tem certeza que deseja excluir?")) return;
-    await api.delete(`/transactions/${id}`);
-    load();
+    try {
+      await api.delete(`/transactions/${id}`);
+      toast.success("Removido com sucesso");
+      load();
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const handleExport = async () => {
     const res = await api.get("/transactions", { params: { per_page: 10000 } });
     const data = res.data.data || res.data;
-    const headers = ["Descricao", "Valor", "Tipo", "Categoria", "Status", "Vencimento", "Pagamento"];
+    const headers = ["Descrição", "Valor", "Tipo", "Categoria", "Status", "Vencimento", "Pagamento"];
     const rows = data.map((t: Transaction) => [
       t.description, t.amount, t.type === "income" ? "Receita" : "Despesa",
       t.category, t.status, t.due_date || "", t.paid_date || "",
@@ -133,7 +148,10 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Transacoes</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold">Transações</h2>
+          <PageHelp {...helpContent.transactions} />
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />Exportar CSV
@@ -144,10 +162,10 @@ export default function TransactionsPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{editingId ? "Editar" : "Nova"} Transacao</DialogTitle>
+                <DialogTitle>{editingId ? "Editar" : "Nova"} Transação</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <div><Label>Descricao</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+                <div><Label>Descrição</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
                 <div><Label>Valor</Label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-4">
                   <div><Label>Tipo</Label>
@@ -173,7 +191,7 @@ export default function TransactionsPage() {
                   <div><Label>Vencimento</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
                 </div>
                 <div><Label>Data Pagamento</Label><Input type="date" value={form.paid_date} onChange={(e) => setForm({ ...form, paid_date: e.target.value })} /></div>
-                <div><Label>Observacoes</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                <div><Label>Observações</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
                 <Button className="w-full" onClick={handleSubmit}>{editingId ? "Salvar" : "Criar"}</Button>
               </div>
             </DialogContent>
@@ -183,7 +201,7 @@ export default function TransactionsPage() {
 
       <div className="flex gap-4">
         <Input
-          placeholder="Buscar por descricao..."
+          placeholder="Buscar por descrição..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-64"
@@ -203,13 +221,13 @@ export default function TransactionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Descricao</TableHead>
+                <TableHead>Descrição</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Vencimento</TableHead>
-                <TableHead className="w-20">Acoes</TableHead>
+                <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -222,7 +240,7 @@ export default function TransactionsPage() {
                   <TableCell>{t.type === "income" ? "Receita" : "Despesa"}</TableCell>
                   <TableCell>{t.category}</TableCell>
                   <TableCell>{statusBadge(t.status)}</TableCell>
-                  <TableCell>{t.due_date || "-"}</TableCell>
+                  <TableCell>{formatDate(t.due_date)}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(t)}><Pencil className="h-4 w-4" /></Button>
@@ -234,11 +252,11 @@ export default function TransactionsPage() {
             </TableBody>
           </Table>
           <div className="flex items-center justify-between p-4">
-            <p className="text-sm text-muted-foreground">{total} transacoes</p>
+            <p className="text-sm text-muted-foreground">{total} transações</p>
             <div className="flex gap-2 items-center">
               <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Anterior</Button>
-              <span className="text-sm py-1">Pagina {page} de {totalPages || 1}</span>
-              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Proximo</Button>
+              <span className="text-sm py-1">Página {page} de {totalPages || 1}</span>
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Próximo</Button>
             </div>
           </div>
         </CardContent>

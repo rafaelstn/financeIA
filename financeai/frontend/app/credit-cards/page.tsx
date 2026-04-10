@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import PageHelp from "@/components/PageHelp";
+import { helpContent } from "@/lib/help-content";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 interface CreditCard {
   id: string;
@@ -88,50 +92,70 @@ export default function CreditCardsPage() {
   };
 
   const createCard = async () => {
-    await api.post("/credit-cards", {
-      name: cardForm.name, bank: cardForm.bank,
-      limit_amount: parseFloat(cardForm.limit_amount),
-      closing_day: parseInt(cardForm.closing_day),
-      due_day: parseInt(cardForm.due_day),
-    });
-    setOpenCard(false);
-    setCardForm({ name: "", bank: "", limit_amount: "", closing_day: "", due_day: "" });
-    loadCards();
+    try {
+      await api.post("/credit-cards", {
+        name: cardForm.name, bank: cardForm.bank,
+        limit_amount: parseFloat(cardForm.limit_amount),
+        closing_day: parseInt(cardForm.closing_day),
+        due_day: parseInt(cardForm.due_day),
+      });
+      toast.success("Criado com sucesso");
+      setOpenCard(false);
+      setCardForm({ name: "", bank: "", limit_amount: "", closing_day: "", due_day: "" });
+      loadCards();
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const deleteCard = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja excluir este cartao?")) return;
-    await api.delete(`/credit-cards/${id}`);
-    loadCards();
+    if (!window.confirm("Tem certeza que deseja excluir este cartão?")) return;
+    try {
+      await api.delete(`/credit-cards/${id}`);
+      toast.success("Removido com sucesso");
+      loadCards();
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const createInvoice = async () => {
-    await api.post(`/credit-cards/${invoiceCardId}/invoices`, {
-      card_id: invoiceCardId,
-      month: parseInt(invoiceForm.month),
-      year: parseInt(invoiceForm.year),
-      due_date: invoiceForm.due_date || null,
-    });
-    setOpenInvoice(false);
-    setInvoiceForm({ month: "", year: "", due_date: "" });
-    loadInvoices(invoiceCardId);
+    try {
+      await api.post(`/credit-cards/${invoiceCardId}/invoices`, {
+        card_id: invoiceCardId,
+        month: parseInt(invoiceForm.month),
+        year: parseInt(invoiceForm.year),
+        due_date: invoiceForm.due_date || null,
+      });
+      toast.success("Criado com sucesso");
+      setOpenInvoice(false);
+      setInvoiceForm({ month: "", year: "", due_date: "" });
+      loadInvoices(invoiceCardId);
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const createExpense = async () => {
     const { cardId, invoiceId } = expenseInvoice;
-    await api.post(`/credit-cards/${cardId}/invoices/${invoiceId}/expenses`, {
-      invoice_id: invoiceId,
-      description: expenseForm.description,
-      amount: parseFloat(expenseForm.amount),
-      category: expenseForm.category,
-      expense_date: expenseForm.expense_date,
-      installments: parseInt(expenseForm.installments),
-      installment_number: parseInt(expenseForm.installment_number),
-    });
-    setOpenExpense(false);
-    setExpenseForm({ description: "", amount: "", category: "Outros", expense_date: "", installments: "1", installment_number: "1" });
-    loadExpenses(cardId, invoiceId);
-    loadInvoices(cardId);
+    try {
+      await api.post(`/credit-cards/${cardId}/invoices/${invoiceId}/expenses`, {
+        invoice_id: invoiceId,
+        description: expenseForm.description,
+        amount: parseFloat(expenseForm.amount),
+        category: expenseForm.category,
+        expense_date: expenseForm.expense_date,
+        installments: parseInt(expenseForm.installments),
+        installment_number: parseInt(expenseForm.installment_number),
+      });
+      toast.success("Criado com sucesso");
+      setOpenExpense(false);
+      setExpenseForm({ description: "", amount: "", category: "Outros", expense_date: "", installments: "1", installment_number: "1" });
+      loadExpenses(cardId, invoiceId);
+      loadInvoices(cardId);
+    } catch {
+      toast.error("Erro na operacao");
+    }
   };
 
   const invoiceStatus = (status: string) => {
@@ -143,11 +167,14 @@ export default function CreditCardsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Cartoes de Credito</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold">Cartões de Crédito</h2>
+          <PageHelp {...helpContent["credit-cards"]} />
+        </div>
         <Dialog open={openCard} onOpenChange={setOpenCard}>
-          <DialogTrigger render={<Button />}><Plus className="h-4 w-4 mr-2" />Novo Cartao</DialogTrigger>
+          <DialogTrigger render={<Button />}><Plus className="h-4 w-4 mr-2" />Novo Cartão</DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Novo Cartao</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Novo Cartão</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div><Label>Nome</Label><Input value={cardForm.name} onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })} /></div>
               <div><Label>Banco</Label><Input value={cardForm.bank} onChange={(e) => setCardForm({ ...cardForm, bank: e.target.value })} /></div>
@@ -167,7 +194,7 @@ export default function CreditCardsPage() {
           <DialogHeader><DialogTitle>Nova Fatura</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>Mes</Label><Input type="number" min="1" max="12" value={invoiceForm.month} onChange={(e) => setInvoiceForm({ ...invoiceForm, month: e.target.value })} /></div>
+              <div><Label>Mês</Label><Input type="number" min="1" max="12" value={invoiceForm.month} onChange={(e) => setInvoiceForm({ ...invoiceForm, month: e.target.value })} /></div>
               <div><Label>Ano</Label><Input type="number" value={invoiceForm.year} onChange={(e) => setInvoiceForm({ ...invoiceForm, year: e.target.value })} /></div>
             </div>
             <div><Label>Vencimento</Label><Input type="date" value={invoiceForm.due_date} onChange={(e) => setInvoiceForm({ ...invoiceForm, due_date: e.target.value })} /></div>
@@ -178,15 +205,15 @@ export default function CreditCardsPage() {
 
       <Dialog open={openExpense} onOpenChange={setOpenExpense}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Novo Lancamento</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Novo Lançamento</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Descricao</Label><Input value={expenseForm.description} onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })} /></div>
+            <div><Label>Descrição</Label><Input value={expenseForm.description} onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })} /></div>
             <div><Label>Valor</Label><Input type="number" step="0.01" value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })} /></div>
             <div><Label>Categoria</Label><Input value={expenseForm.category} onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })} /></div>
             <div><Label>Data</Label><Input type="date" value={expenseForm.expense_date} onChange={(e) => setExpenseForm({ ...expenseForm, expense_date: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-4">
               <div><Label>Parcelas</Label><Input type="number" value={expenseForm.installments} onChange={(e) => setExpenseForm({ ...expenseForm, installments: e.target.value })} /></div>
-              <div><Label>Parcela N</Label><Input type="number" value={expenseForm.installment_number} onChange={(e) => setExpenseForm({ ...expenseForm, installment_number: e.target.value })} /></div>
+              <div><Label>Parcela Nº</Label><Input type="number" value={expenseForm.installment_number} onChange={(e) => setExpenseForm({ ...expenseForm, installment_number: e.target.value })} /></div>
             </div>
             <Button className="w-full" onClick={createExpense}>Criar</Button>
           </div>
@@ -219,7 +246,7 @@ export default function CreditCardsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Periodo</TableHead>
+                      <TableHead>Período</TableHead>
                       <TableHead>Total</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Vencimento</TableHead>
@@ -235,20 +262,20 @@ export default function CreditCardsPage() {
                           </TableCell>
                           <TableCell>R$ {inv.total_amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                           <TableCell>{invoiceStatus(inv.status)}</TableCell>
-                          <TableCell>{inv.due_date || "-"}</TableCell>
+                          <TableCell>{formatDate(inv.due_date)}</TableCell>
                         </TableRow>
                         {expandedInvoice === inv.id && (
                           <TableRow>
                             <TableCell colSpan={4} className="bg-muted/50 p-4">
                               <div className="flex justify-end mb-2">
                                 <Button size="sm" variant="outline" onClick={() => { setExpenseInvoice({ cardId: card.id, invoiceId: inv.id }); setOpenExpense(true); }}>
-                                  <Plus className="h-3 w-3 mr-1" />Lancamento
+                                  <Plus className="h-3 w-3 mr-1" />Lançamento
                                 </Button>
                               </div>
                               <Table>
                                 <TableHeader>
                                   <TableRow>
-                                    <TableHead>Descricao</TableHead>
+                                    <TableHead>Descrição</TableHead>
                                     <TableHead>Valor</TableHead>
                                     <TableHead>Categoria</TableHead>
                                     <TableHead>Data</TableHead>
@@ -261,7 +288,7 @@ export default function CreditCardsPage() {
                                       <TableCell>{exp.description}</TableCell>
                                       <TableCell>R$ {exp.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                                       <TableCell>{exp.category}</TableCell>
-                                      <TableCell>{exp.expense_date}</TableCell>
+                                      <TableCell>{formatDate(exp.expense_date)}</TableCell>
                                       <TableCell>{exp.installment_number}/{exp.installments}</TableCell>
                                     </TableRow>
                                   ))}
