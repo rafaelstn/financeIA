@@ -52,11 +52,40 @@ export default function PlanSummary({ month, year }: Props) {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  const [paidCount, setPaidCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+
   useEffect(() => {
     setLoading(true);
     setNotFound(false);
     api.get(`/plans/${month}/${year}`)
-      .then((res) => setPlan(res.data))
+      .then((res) => {
+        setPlan(res.data);
+        // Count items
+        const sections = res.data?.content?.sections || [];
+        const total = sections.reduce((s: number, sec: PlanSection) => s + sec.items.length, 0);
+        setTotalCount(total);
+
+        // Fetch transactions to count paid ones
+        api.get("/transactions", { params: { month, year, per_page: 100 } })
+          .then((txRes) => {
+            const txns = txRes.data.data || txRes.data;
+            const paidDescs = txns
+              .filter((t: { status: string }) => t.status === "paid")
+              .map((t: { description: string }) => t.description.toLowerCase().replace(/[^a-z0-9]/g, ""));
+
+            let paid = 0;
+            for (const sec of sections) {
+              for (const item of sec.items) {
+                const desc = item.description.toLowerCase().replace(/[^a-z0-9]/g, "");
+                if (paidDescs.some((p: string) => p.includes(desc) || desc.includes(p))) {
+                  paid++;
+                }
+              }
+            }
+            setPaidCount(paid);
+          });
+      })
       .catch(() => {
         setPlan(null);
         setNotFound(true);
@@ -120,8 +149,24 @@ export default function PlanSummary({ month, year }: Props) {
         </div>
       </div>
 
-      {/* Titulo do plano */}
-      <p className="text-sm font-medium mb-3">{plan.title}</p>
+      {/* Progress bar */}
+      <div className="mb-3">
+        <div className="flex justify-between items-center mb-1.5">
+          <p className="text-sm font-medium">{plan.title}</p>
+          <span className="text-xs font-semibold" style={{ color: paidCount === totalCount && totalCount > 0 ? "var(--accent-green)" : "var(--primary)" }}>
+            {paidCount}/{totalCount}
+          </span>
+        </div>
+        <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "var(--card-inner, #1e2d4a)" }}>
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0}%`,
+              background: paidCount === totalCount && totalCount > 0 ? "var(--accent-green)" : "var(--primary)",
+            }}
+          />
+        </div>
+      </div>
 
       {/* Seções resumidas */}
       <div className="space-y-2">

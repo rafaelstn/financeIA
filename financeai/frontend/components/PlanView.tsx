@@ -1,7 +1,8 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Clock, AlertTriangle, Wallet, PiggyBank, ShoppingCart, Banknote } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, Circle, AlertTriangle, PiggyBank, ShoppingCart, Banknote, Wallet, Trophy } from "lucide-react";
+import api from "@/lib/api";
 
 interface PlanItem {
   description: string;
@@ -26,6 +27,16 @@ interface Plan {
   status: string;
 }
 
+interface Transaction {
+  id: string;
+  description: string;
+  amount: number;
+  type: string;
+  category: string;
+  status: string;
+  due_date: string;
+}
+
 const CATEGORY_ICONS: Record<string, typeof Wallet> = {
   dividas: AlertTriangle,
   reserva: PiggyBank,
@@ -33,75 +44,186 @@ const CATEGORY_ICONS: Record<string, typeof Wallet> = {
   sobra: Banknote,
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-  dividas: "text-red-500",
-  reserva: "text-blue-500",
-  custo_vida: "text-amber-500",
-  sobra: "text-emerald-500",
-};
+function fmt(value: number): string {
+  return value.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+}
 
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  planejado: { label: "Planejado", color: "bg-blue-500/20 text-blue-400" },
-  em_andamento: { label: "Em andamento", color: "bg-amber-500/20 text-amber-400" },
-  concluido: { label: "Concluído", color: "bg-emerald-500/20 text-emerald-400" },
-};
+function matchTransaction(item: PlanItem, transactions: Transaction[]): Transaction | null {
+  // Try exact description match
+  const desc = item.description.toLowerCase().replace(/[^a-z0-9]/g, "");
+  for (const t of transactions) {
+    const tDesc = t.description.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (tDesc === desc || tDesc.includes(desc) || desc.includes(tDesc)) {
+      return t;
+    }
+  }
+  // Try partial match for common items
+  const keywords = item.description.toLowerCase().split(/[\s-]+/).filter(w => w.length > 3);
+  for (const t of transactions) {
+    const tLower = t.description.toLowerCase();
+    if (keywords.some(k => tLower.includes(k))) {
+      return t;
+    }
+  }
+  return null;
+}
 
 export default function PlanView({ plan }: { plan: Plan }) {
-  const statusCfg = STATUS_CONFIG[plan.status] || STATUS_CONFIG.planejado;
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get("/transactions", { params: { month: plan.month, year: plan.year, per_page: 100 } })
+      .then((res) => setTransactions(res.data.data || res.data))
+      .finally(() => setLoading(false));
+  }, [plan.month, plan.year]);
+
+  const sections = plan.content?.sections || [];
+
+  // Calculate overall progress
+  let totalItems = 0;
+  let completedItems = 0;
+  const sectionStats: Record<string, { total: number; done: number }> = {};
+
+  for (const section of sections) {
+    let done = 0;
+    for (const item of section.items) {
+      totalItems++;
+      const match = matchTransaction(item, transactions);
+      if (match && match.status === "paid") {
+        completedItems++;
+        done++;
+      }
+    }
+    sectionStats[section.category] = { total: section.items.length, done };
+  }
+
+  const progressPct = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold">{plan.title}</h3>
-        <span className={`text-xs px-2 py-1 rounded-full ${statusCfg.color}`}>
-          {statusCfg.label}
-        </span>
+      {/* Header with progress */}
+      <div className="rounded-[10px] p-5 bg-card border border-border">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-lg font-bold">{plan.title}</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {completedItems} de {totalItems} itens concluidos
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {progressPct === 100 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold"
+                style={{ color: "var(--status-paid-text)", background: "var(--status-paid-bg)" }}>
+                <Trophy className="h-4 w-4" />
+                Concluido!
+              </div>
+            )}
+            <div className="text-2xl font-bold" style={{ color: progressPct === 100 ? "var(--accent-green)" : "var(--primary)" }}>
+              {progressPct}%
+            </div>
+          </div>
+        </div>
+        {/* Progress bar */}
+        <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: "var(--card-inner)" }}>
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${progressPct}%`,
+              background: progressPct === 100 ? "var(--accent-green)" : "var(--primary)",
+            }}
+          />
+        </div>
       </div>
 
-      {plan.content.sections?.map((section) => {
+      {/* Sections */}
+      {sections.map((section) => {
         const Icon = CATEGORY_ICONS[section.category] || Wallet;
-        const color = CATEGORY_COLORS[section.category] || "text-gray-500";
+        const stats = sectionStats[section.category] || { total: 0, done: 0 };
+        const sectionPct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
 
         return (
-          <Card key={section.category}>
-            <CardHeader className="flex flex-row items-center gap-3 pb-2">
-              <Icon className={`h-5 w-5 ${color}`} />
-              <CardTitle className="text-sm font-medium">{section.title}</CardTitle>
-              <span className={`ml-auto text-lg font-bold ${color}`}>
-                R$ {section.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </span>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {section.items.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
-                    <div>
-                      <span>{item.description}</span>
+          <div key={section.category} className="rounded-[10px] bg-card border border-border overflow-hidden">
+            {/* Section header */}
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className="flex items-center gap-3">
+                <Icon className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <h4 className="text-sm font-semibold">{section.title}</h4>
+                  <p className="text-xs text-muted-foreground">{stats.done}/{stats.total} concluidos</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-base font-bold">R$ {fmt(section.total)}</p>
+                <div className="w-20 h-1.5 rounded-full mt-1" style={{ background: "var(--card-inner)" }}>
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${sectionPct}%`,
+                      background: sectionPct === 100 ? "var(--accent-green)" : "var(--primary)",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Items */}
+            <div className="divide-y" style={{ borderColor: "var(--card-inner)" }}>
+              {section.items.map((item, i) => {
+                const match = matchTransaction(item, transactions);
+                const isPaid = match?.status === "paid";
+                const isOverdue = match?.status === "overdue";
+                const isPending = match?.status === "pending";
+
+                return (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-3 px-4 py-3 transition-all ${isPaid ? "opacity-60" : ""}`}
+                  >
+                    {/* Status icon */}
+                    {isPaid ? (
+                      <CheckCircle2 className="h-5 w-5 flex-shrink-0" style={{ color: "var(--accent-green)" }} />
+                    ) : isOverdue ? (
+                      <AlertTriangle className="h-5 w-5 flex-shrink-0" style={{ color: "var(--accent-red)" }} />
+                    ) : (
+                      <Circle className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                    )}
+
+                    {/* Description */}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm ${isPaid ? "line-through text-muted-foreground" : ""}`}>
+                        {item.description}
+                      </p>
                       {item.notes && (
-                        <p className="text-xs text-muted-foreground">{item.notes}</p>
+                        <p className="text-xs text-muted-foreground truncate">{item.notes}</p>
                       )}
                     </div>
-                    <span className="font-medium">
-                      R$ {item.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                    </span>
+
+                    {/* Amount + status */}
+                    <div className="text-right flex-shrink-0">
+                      <p className={`text-sm font-semibold ${isPaid ? "text-muted-foreground line-through" : ""}`}>
+                        R$ {fmt(item.amount)}
+                      </p>
+                      {isPaid && (
+                        <span className="text-[10px] font-medium" style={{ color: "var(--status-paid-text)" }}>Pago</span>
+                      )}
+                      {isOverdue && (
+                        <span className="text-[10px] font-medium" style={{ color: "var(--status-overdue-text)" }}>Atrasado</span>
+                      )}
+                      {isPending && (
+                        <span className="text-[10px] font-medium" style={{ color: "var(--status-pending-text)" }}>Pendente</span>
+                      )}
+                      {!match && section.category !== "sobra" && section.category !== "reserva" && (
+                        <span className="text-[10px] text-muted-foreground">Sem registro</span>
+                      )}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                );
+              })}
+            </div>
+          </div>
         );
       })}
-
-      {plan.observations && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Observações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{plan.observations}</p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
