@@ -173,7 +173,7 @@ export default function BudgetsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(CATEGORIES).map(([k, label]) => (
-                      <SelectItem key={k} value={k}>
+                      <SelectItem key={k} value={k} label={label}>
                         {label}
                       </SelectItem>
                     ))}

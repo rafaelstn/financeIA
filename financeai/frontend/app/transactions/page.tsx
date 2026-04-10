@@ -171,13 +171,13 @@ export default function TransactionsPage() {
                   <div><Label>Tipo</Label>
                     <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v ?? "" })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent><SelectItem value="income">Receita</SelectItem><SelectItem value="expense">Despesa</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="income" label="Receita">Receita</SelectItem><SelectItem value="expense" label="Despesa">Despesa</SelectItem></SelectContent>
                     </Select>
                   </div>
                   <div><Label>Categoria</Label>
                     <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v ?? "" })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                      <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c} label={c}>{c}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                 </div>
@@ -185,7 +185,7 @@ export default function TransactionsPage() {
                   <div><Label>Status</Label>
                     <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v ?? "" })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent><SelectItem value="pending">Pendente</SelectItem><SelectItem value="paid">Pago</SelectItem><SelectItem value="overdue">Vencido</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="pending" label="Pendente">Pendente</SelectItem><SelectItem value="paid" label="Pago">Pago</SelectItem><SelectItem value="overdue" label="Vencido">Vencido</SelectItem></SelectContent>
                     </Select>
                   </div>
                   <div><Label>Vencimento</Label><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
@@ -208,11 +208,11 @@ export default function TransactionsPage() {
         />
         <Select value={filterType} onValueChange={(v) => { setFilterType(v ?? "all"); setPage(1); }}>
           <SelectTrigger className="w-40"><SelectValue placeholder="Tipo" /></SelectTrigger>
-          <SelectContent><SelectItem value="all">Todos</SelectItem><SelectItem value="income">Receitas</SelectItem><SelectItem value="expense">Despesas</SelectItem></SelectContent>
+          <SelectContent><SelectItem value="all" label="Todos">Todos</SelectItem><SelectItem value="income" label="Receitas">Receitas</SelectItem><SelectItem value="expense" label="Despesas">Despesas</SelectItem></SelectContent>
         </Select>
         <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v ?? "all"); setPage(1); }}>
           <SelectTrigger className="w-40"><SelectValue placeholder="Categoria" /></SelectTrigger>
-          <SelectContent><SelectItem value="all">Todas</SelectItem>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+          <SelectContent><SelectItem value="all" label="Todas">Todas</SelectItem>{CATEGORIES.map((c) => <SelectItem key={c} value={c} label={c}>{c}</SelectItem>)}</SelectContent>
         </Select>
       </div>
 

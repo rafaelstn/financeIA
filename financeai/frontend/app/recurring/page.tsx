@@ -265,7 +265,7 @@ export default function RecurringPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {Object.entries(TYPES).map(([k, label]) => (
-                          <SelectItem key={k} value={k}>
+                          <SelectItem key={k} value={k} label={label}>
                             {label}
                           </SelectItem>
                         ))}
@@ -287,7 +287,7 @@ export default function RecurringPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {Object.entries(CATEGORIES).map(([k, label]) => (
-                          <SelectItem key={k} value={k}>
+                          <SelectItem key={k} value={k} label={label}>
                             {label}
                           </SelectItem>
                         ))}
@@ -307,7 +307,7 @@ export default function RecurringPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {Object.entries(FREQUENCIES).map(([k, label]) => (
-                          <SelectItem key={k} value={k}>
+                          <SelectItem key={k} value={k} label={label}>
                             {label}
                           </SelectItem>
                         ))}

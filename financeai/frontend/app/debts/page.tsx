@@ -268,7 +268,7 @@ export default function DebtsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(CATEGORIES).map(([k, label]) => (
-                        <SelectItem key={k} value={k}>
+                        <SelectItem key={k} value={k} label={label}>
                           {label}
                         </SelectItem>
                       ))}
@@ -286,7 +286,7 @@ export default function DebtsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(STATUSES).map(([k, label]) => (
-                        <SelectItem key={k} value={k}>
+                        <SelectItem key={k} value={k} label={label}>
                           {label}
                         </SelectItem>
                       ))}
@@ -440,9 +440,9 @@ export default function DebtsPage() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="all" label="Todos">Todos</SelectItem>
             {Object.entries(STATUSES).map(([k, label]) => (
-              <SelectItem key={k} value={k}>
+              <SelectItem key={k} value={k} label={label}>
                 {label}
               </SelectItem>
             ))}
@@ -456,9 +456,9 @@ export default function DebtsPage() {
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="all" label="Todas">Todas</SelectItem>
             {Object.entries(CATEGORIES).map(([k, label]) => (
-              <SelectItem key={k} value={k}>
+              <SelectItem key={k} value={k} label={label}>
                 {label}
               </SelectItem>
             ))}
