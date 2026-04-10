@@ -33,23 +33,23 @@ export default function UpcomingBills() {
 
   return (
     <div className="rounded-[10px] p-4 bg-card border border-border card-hover">
-      <h3 className="text-sm font-semibold mb-3">Proximos vencimentos</h3>
+      <h3 className="text-base font-semibold mb-3">Proximos vencimentos</h3>
       {bills.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhuma conta proxima</p>
       ) : (
         <div>
           {/* Header */}
           <div className="grid grid-cols-[1fr_auto_auto] gap-2 pb-2 border-b border-border mb-1">
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Conta</span>
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Vence</span>
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground text-right">Valor</span>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">Conta</span>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">Vence</span>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground text-right">Valor</span>
           </div>
           {bills.slice(0, 6).map((bill, i) => (
             <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-2 py-2 border-b border-[#0f1825] last:border-0 items-center">
               <div>
                 <p className="text-sm">{bill.description}</p>
                 {bill.status === "overdue" && (
-                  <span className="text-[10px] text-[#fca5a5]">Atrasada</span>
+                  <span className="text-xs text-[#fca5a5]">Atrasada</span>
                 )}
               </div>
               <span className="text-sm text-muted-foreground">{formatDate(bill.due_date)}</span>

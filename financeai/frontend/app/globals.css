@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-poppins);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-poppins);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -86,16 +86,16 @@
 .dark {
   /* Base backgrounds */
   --background: #0c1222;
-  --foreground: #e2e8f0;
+  --foreground: #f1f5f9;
 
   /* Card system */
   --card: #111a2e;
-  --card-foreground: #e2e8f0;
+  --card-foreground: #f1f5f9;
   --card-inner: #0f1825;
 
   /* Popover */
   --popover: #111a2e;
-  --popover-foreground: #e2e8f0;
+  --popover-foreground: #f1f5f9;
 
   /* Primary (accent blue) */
   --primary: #60a5fa;
@@ -103,15 +103,15 @@
 
   /* Secondary */
   --secondary: #1e2d4a;
-  --secondary-foreground: #e2e8f0;
+  --secondary-foreground: #f1f5f9;
 
   /* Muted */
   --muted: #1e2d4a;
-  --muted-foreground: #64748b;
+  --muted-foreground: #94a3b8;
 
   /* Accent */
   --accent: #1e2d4a;
-  --accent-foreground: #e2e8f0;
+  --accent-foreground: #f1f5f9;
 
   /* Destructive */
   --destructive: #f87171;
@@ -130,11 +130,11 @@
 
   /* Sidebar */
   --sidebar: #111a2e;
-  --sidebar-foreground: #e2e8f0;
+  --sidebar-foreground: #f1f5f9;
   --sidebar-primary: #60a5fa;
   --sidebar-primary-foreground: #0c1222;
   --sidebar-accent: #1e2d4a;
-  --sidebar-accent-foreground: #e2e8f0;
+  --sidebar-accent-foreground: #f1f5f9;
   --sidebar-border: #1e2d4a;
   --sidebar-ring: #60a5fa;
 

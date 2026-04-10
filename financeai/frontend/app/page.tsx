@@ -32,17 +32,17 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold">Dashboard Financeiro</h2>
-          <p className="text-xs text-muted-foreground">Visao geral financeira</p>
+          <h2 className="text-xl font-semibold">Dashboard Financeiro</h2>
+          <p className="text-sm text-muted-foreground">Visao geral financeira</p>
         </div>
         <div className="flex gap-px bg-secondary rounded-md overflow-hidden border border-border">
-          <button onClick={prev} className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={prev} className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             &#8249; {MONTH_NAMES[month === 1 ? 11 : month - 2]?.slice(0, 3)}
           </button>
-          <div className="px-4 py-1.5 text-xs font-semibold bg-accent">
+          <div className="px-4 py-1.5 text-sm font-semibold bg-accent">
             {MONTH_NAMES[month - 1]} {year}
           </div>
-          <button onClick={next} className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={next} className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             {MONTH_NAMES[month === 12 ? 0 : month]?.slice(0, 3)} &#8250;
           </button>
         </div>

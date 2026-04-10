@@ -60,7 +60,7 @@ export default function SpendingChart({ month, year }: Props) {
       {/* Bar chart - Evolução mensal */}
       <div className="lg:col-span-3 rounded-[10px] p-4 bg-card border border-border card-hover">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-sm font-semibold">Evolucao mensal</h3>
+          <h3 className="text-base font-semibold">Evolucao mensal</h3>
           <div className="flex gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-sm bg-[#60a5fa]" />
@@ -90,7 +90,7 @@ export default function SpendingChart({ month, year }: Props) {
 
       {/* Donut chart - Top 5 categorias */}
       <div className="lg:col-span-2 rounded-[10px] p-4 bg-card border border-border card-hover">
-        <h3 className="text-sm font-semibold mb-3">Top 5 Despesas por categoria</h3>
+        <h3 className="text-base font-semibold mb-3">Top 5 Despesas por categoria</h3>
         {categoryData.length === 0 ? (
           <p className="text-sm text-muted-foreground">Sem dados</p>
         ) : (

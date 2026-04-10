@@ -60,11 +60,11 @@ export default function SummaryCards({ month, year }: Props) {
           <svg className="absolute bottom-0 left-0 right-0 h-10 opacity-20" viewBox="0 0 200 40" preserveAspectRatio="none">
             <polyline points="0,35 20,30 40,32 60,25 80,28 100,18 120,22 140,15 160,12 180,8 200,5" fill="none" stroke="#4ade80" strokeWidth="2"/>
           </svg>
-          <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Saldo</p>
-          <p className={`text-2xl font-bold mt-1 relative ${data.balance >= 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Saldo</p>
+          <p className={`text-3xl font-bold mt-1 relative ${data.balance >= 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
             R$ {fmt(data.balance)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1.5 relative">
+          <p className="text-sm text-muted-foreground mt-1.5 relative">
             {data.balance >= 0 ? "+" : ""}{pctBalance}% vs despesas
           </p>
         </div>
@@ -75,9 +75,9 @@ export default function SummaryCards({ month, year }: Props) {
           <svg className="absolute bottom-0 left-0 right-0 h-10 opacity-15" viewBox="0 0 200 40" preserveAspectRatio="none">
             <polyline points="0,30 30,28 60,25 90,20 120,22 150,15 200,10" fill="none" stroke="#60a5fa" strokeWidth="2"/>
           </svg>
-          <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Receitas</p>
-          <p className="text-2xl font-bold mt-1 relative">R$ {fmt(data.income)}</p>
-          <p className="text-xs text-muted-foreground mt-1.5 relative">3 fontes de renda</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Receitas</p>
+          <p className="text-3xl font-bold mt-1 relative">R$ {fmt(data.income)}</p>
+          <p className="text-sm text-muted-foreground mt-1.5 relative">3 fontes de renda</p>
         </div>
 
         {/* Despesas */}
@@ -86,46 +86,46 @@ export default function SummaryCards({ month, year }: Props) {
           <svg className="absolute bottom-0 left-0 right-0 h-10 opacity-15" viewBox="0 0 200 40" preserveAspectRatio="none">
             <polyline points="0,25 30,20 60,28 90,22 120,30 150,18 200,15" fill="none" stroke="#c084fc" strokeWidth="2"/>
           </svg>
-          <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Despesas</p>
-          <p className="text-2xl font-bold mt-1 relative">R$ {fmt(data.expenses)}</p>
-          <p className="text-xs text-muted-foreground mt-1.5 relative">{pctExpenses}% da receita</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Despesas</p>
+          <p className="text-3xl font-bold mt-1 relative">R$ {fmt(data.expenses)}</p>
+          <p className="text-sm text-muted-foreground mt-1.5 relative">{pctExpenses}% da receita</p>
         </div>
       </div>
 
       {/* Secondary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="rounded-[10px] p-3 bg-card border border-border card-hover">
-          <p className="text-[8px] uppercase tracking-wide text-muted-foreground">Investido</p>
-          <p className="text-[15px] font-semibold mt-1 text-muted-foreground">R$ {fmt(data.total_invested)}</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Investido</p>
+          <p className="text-lg font-semibold mt-1 text-muted-foreground">R$ {fmt(data.total_invested)}</p>
         </div>
         <div className="rounded-[10px] p-3 bg-card border border-border card-hover">
           <div className="flex justify-between items-center">
-            <p className="text-[8px] uppercase tracking-wide text-muted-foreground">Dizimo</p>
-            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Dizimo</p>
+            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
               data.tithe_status === "paid"
                 ? "text-[#4ade80]" : "text-[#f87171]"
             }`} style={{ background: data.tithe_status === "paid" ? "rgba(74,222,128,0.08)" : "rgba(248,113,113,0.08)" }}>
               {data.tithe_status === "paid" ? "Pago" : "Pendente"}
             </span>
           </div>
-          <p className="text-[15px] font-semibold mt-1">R$ {fmt(data.tithe)}</p>
+          <p className="text-lg font-semibold mt-1">R$ {fmt(data.tithe)}</p>
         </div>
         <div className="rounded-[10px] p-3 bg-card border border-border card-hover">
           <div className="flex justify-between items-center">
-            <p className="text-[8px] uppercase tracking-wide text-muted-foreground">Primicia</p>
-            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Primicia</p>
+            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
               data.firstfruits_status === "paid"
                 ? "text-[#4ade80]" : "text-[#f87171]"
             }`} style={{ background: data.firstfruits_status === "paid" ? "rgba(74,222,128,0.08)" : "rgba(248,113,113,0.08)" }}>
               {data.firstfruits_status === "paid" ? "Pago" : "Pendente"}
             </span>
           </div>
-          <p className="text-[15px] font-semibold mt-1">R$ {fmt(data.firstfruits)}</p>
+          <p className="text-lg font-semibold mt-1">R$ {fmt(data.firstfruits)}</p>
         </div>
         <div className="rounded-[10px] p-3 bg-card border border-border card-hover">
-          <p className="text-[8px] uppercase tracking-wide text-muted-foreground">Dividas</p>
-          <p className="text-[15px] font-semibold mt-1 text-[#f87171]">—</p>
-          <p className="text-[8px] text-muted-foreground mt-0.5">ver pagina de dividas</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Dividas</p>
+          <p className="text-lg font-semibold mt-1 text-[#f87171]">—</p>
+          <p className="text-xs text-muted-foreground mt-0.5">ver pagina de dividas</p>
         </div>
       </div>
     </div>

@@ -30,7 +30,7 @@ export default function GoalsProgress() {
   return (
     <div className="rounded-[10px] p-4 bg-card border border-border card-hover">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-sm font-semibold">Metas</h3>
+        <h3 className="text-base font-semibold">Metas</h3>
         <Link href="/goals" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
           Ver todas &#8250;
         </Link>

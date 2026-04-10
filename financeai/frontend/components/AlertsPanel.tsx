@@ -39,7 +39,7 @@ export default function AlertsPanel() {
 
   return (
     <div className="rounded-[10px] p-4 bg-card border border-border card-hover">
-      <h3 className="text-sm font-semibold mb-3">Alertas</h3>
+      <h3 className="text-base font-semibold mb-3">Alertas</h3>
       {displayed.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhum alerta ativo</p>
       ) : (
@@ -52,7 +52,7 @@ export default function AlertsPanel() {
                 className="p-3 rounded-lg"
                 style={{ background: style.bg, borderLeft: `3px solid ${style.border}` }}
               >
-                <p className="text-xs font-semibold" style={{ color: style.text }}>{alert.message}</p>
+                <p className="text-sm font-semibold" style={{ color: style.text }}>{alert.message}</p>
               </div>
             );
           })}
