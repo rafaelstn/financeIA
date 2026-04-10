@@ -122,13 +122,18 @@ def _compute_next_due(current: date, frequency: str, item: dict | None = None) -
         return current + relativedelta(months=1)
 
 
-def _transaction_exists(description: str, due_date: str) -> bool:
-    """Check if a transaction with same description and due_date already exists."""
+def _transaction_exists_in_month(description: str, year: int, month: int) -> bool:
+    """Check if a transaction with same description already exists in the given month."""
+    start = f"{year}-{month:02d}-01"
+    end_month = month + 1 if month < 12 else 1
+    end_year = year if month < 12 else year + 1
+    end = f"{end_year}-{end_month:02d}-01"
     result = (
         supabase.table("transactions")
         .select("id")
         .eq("description", description)
-        .eq("due_date", due_date)
+        .gte("due_date", start)
+        .lt("due_date", end)
         .execute()
     )
     return len(result.data) > 0
@@ -169,8 +174,8 @@ async def generate_pending(months_ahead: int = 3):
 
             due_str = str(actual_due)
 
-            # Check for duplicate before creating
-            if not _transaction_exists(item["description"], due_str):
+            # Check for duplicate: same description in same month
+            if not _transaction_exists_in_month(item["description"], actual_due.year, actual_due.month):
                 txn_data = {
                     "description": item["description"],
                     "amount": item["amount"],
