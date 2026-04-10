@@ -167,37 +167,52 @@ export default function PlanningPage() {
 
         {/* History */}
         {plans.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">Histórico de Planos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {plans.map((p) => (
+          <div className="rounded-[10px] p-4 bg-card border border-border">
+            <h3 className="text-base font-semibold mb-3">Ciclos de Planejamento</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[...plans].sort((a, b) => a.year === b.year ? a.month - b.month : a.year - b.year).map((p) => {
+                const isActive = p.month === month && p.year === year;
+                const statusCfg = p.status === "concluido"
+                  ? { label: "Concluído", style: { color: "var(--status-paid-text)", background: "var(--status-paid-bg)" } }
+                  : p.status === "em_andamento"
+                  ? { label: "Em andamento", style: { color: "var(--status-pending-text)", background: "var(--status-pending-bg)" } }
+                  : { label: "Planejado", style: { color: "var(--status-info-text)", background: "var(--status-info-bg)" } };
+
+                // Calculate total from sections
+                const total = p.content?.sections?.reduce((s: number, sec: { total: number }) => s + sec.total, 0) || 0;
+
+                return (
                   <button
                     key={p.id}
                     onClick={() => { setMonth(p.month); setYear(p.year); }}
-                    className={`w-full text-left flex items-center justify-between p-3 rounded-lg text-sm transition-colors ${
-                      p.month === month && p.year === year
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-muted"
+                    className={`text-left p-4 rounded-lg border transition-all ${
+                      isActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
                     }`}
                   >
-                    <span>{p.title}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      p.status === "concluido"
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : p.status === "em_andamento"
-                        ? "bg-amber-500/20 text-amber-400"
-                        : "bg-blue-500/20 text-blue-400"
-                    }`}>
-                      {p.status === "concluido" ? "Concluído" : p.status === "em_andamento" ? "Em andamento" : "Planejado"}
-                    </span>
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs text-muted-foreground">
+                        {MONTH_NAMES[p.month - 1]} {p.year}
+                      </span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={statusCfg.style}>
+                        {statusCfg.label}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold mb-1 line-clamp-1">{p.title.replace(/^Ciclo \d+ - \w+\/\d+ - /, '')}</p>
+                    {p.content?.sections && (
+                      <div className="space-y-1 mt-2">
+                        {p.content.sections.map((sec: { category: string; title: string; total: number }) => (
+                          <div key={sec.category} className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{sec.title.split(' - ')[0]}</span>
+                            <span className="font-medium">R$ {sec.total.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
 
