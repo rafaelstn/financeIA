@@ -239,12 +239,12 @@ export default function TransactionsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-64"
         />
-        <Select value={filterType} onValueChange={(v) => { setFilterType(v ?? "all"); setPage(1); }}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Tipo" /></SelectTrigger>
+        <Select defaultValue="all" onValueChange={(v) => { setFilterType(v ?? "all"); setPage(1); }}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Todos" /></SelectTrigger>
           <SelectContent><SelectItem value="all" label="Todos">Todos</SelectItem><SelectItem value="income" label="Receitas">Receitas</SelectItem><SelectItem value="expense" label="Despesas">Despesas</SelectItem></SelectContent>
         </Select>
-        <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v ?? "all"); setPage(1); }}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Categoria" /></SelectTrigger>
+        <Select defaultValue="all" onValueChange={(v) => { setFilterCategory(v ?? "all"); setPage(1); }}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Todas" /></SelectTrigger>
           <SelectContent><SelectItem value="all" label="Todas">Todas</SelectItem>{CATEGORIES.map((c) => <SelectItem key={c} value={c} label={c}>{c}</SelectItem>)}</SelectContent>
         </Select>
       </div>
