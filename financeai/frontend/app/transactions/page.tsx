@@ -33,7 +33,15 @@ interface Transaction {
   notes: string | null;
 }
 
+const MONTH_NAMES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
 export default function TransactionsPage() {
+  const now = new Date();
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [year, setYear] = useState(now.getFullYear());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -48,8 +56,20 @@ export default function TransactionsPage() {
   const [total, setTotal] = useState(0);
   const perPage = 20;
 
+  function prevMonth() {
+    if (month === 1) { setMonth(12); setYear(year - 1); }
+    else setMonth(month - 1);
+    setPage(1);
+  }
+
+  function nextMonth() {
+    if (month === 12) { setMonth(1); setYear(year + 1); }
+    else setMonth(month + 1);
+    setPage(1);
+  }
+
   const load = () => {
-    const params: Record<string, string | number> = { page, per_page: perPage };
+    const params: Record<string, string | number> = { page, per_page: perPage, month, year };
     if (filterType !== "all") params.type = filterType;
     if (filterCategory !== "all") params.category = filterCategory;
     api.get("/transactions", { params }).then((res) => {
@@ -58,7 +78,7 @@ export default function TransactionsPage() {
     });
   };
 
-  useEffect(() => { load(); }, [filterType, filterCategory, page]);
+  useEffect(() => { load(); }, [filterType, filterCategory, page, month, year]);
 
   const resetForm = () => {
     setForm({ description: "", amount: "", type: "expense", category: "Outros", status: "pending", due_date: "", paid_date: "", notes: "" });
@@ -199,7 +219,20 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-3 items-center">
+        {/* Month selector */}
+        <div className="flex gap-px bg-secondary rounded-md overflow-hidden border border-border">
+          <button onClick={prevMonth} className="px-2.5 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            &#8249;
+          </button>
+          <div className="px-3 py-1.5 text-sm font-semibold bg-accent min-w-[130px] text-center">
+            {MONTH_NAMES[month - 1]} {year}
+          </div>
+          <button onClick={nextMonth} className="px-2.5 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            &#8250;
+          </button>
+        </div>
+
         <Input
           placeholder="Buscar por descrição..."
           value={search}
