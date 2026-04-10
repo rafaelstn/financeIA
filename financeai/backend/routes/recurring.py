@@ -41,13 +41,13 @@ async def list_recurring(
 @router.post("/", status_code=201)
 async def create_recurring(item: RecurringCreate):
     data = item.model_dump(exclude_none=True)
+    total_months = data.get("total_months", 12)
 
     # Auto-calculate next_due_date when using business day
     if data.get("use_business_day") and data.get("business_day_number"):
         today = date.today()
         bd = get_nth_business_day(today.year, today.month, data["business_day_number"])
         if bd <= today:
-            # Already passed this month, use next month
             next_m = today.month + 1 if today.month < 12 else 1
             next_y = today.year if today.month < 12 else today.year + 1
             bd = get_nth_business_day(next_y, next_m, data["business_day_number"])
@@ -56,7 +56,74 @@ async def create_recurring(item: RecurringCreate):
         data["next_due_date"] = str(data["next_due_date"])
 
     result = supabase.table("recurring_transactions").insert(data).execute()
-    return result.data[0]
+    created_item = result.data[0]
+
+    # Generate all transaction copies for the specified duration
+    copies = _generate_copies_for_item(created_item, total_months)
+
+    # Update months_generated
+    supabase.table("recurring_transactions").update(
+        {"months_generated": copies}
+    ).eq("id", created_item["id"]).execute()
+
+    return created_item
+
+
+def _generate_copies_for_item(item: dict, total_months: int) -> int:
+    """Generate transaction copies for a recurring item. Returns count created."""
+    from services.tithe_service import sync_tithe_and_firstfruits
+
+    today = date.today()
+    start_date = date.fromisoformat(item["next_due_date"]) if item.get("next_due_date") else today
+    created = 0
+    months_with_income = set()
+
+    current = start_date
+    for i in range(total_months):
+        # Calculate due date for this period
+        if item.get("use_business_day") and item.get("business_day_number"):
+            actual_due = get_nth_business_day(current.year, current.month, item["business_day_number"])
+        else:
+            actual_due = current
+
+        # Check duplicate by description + month
+        month_start = f"{actual_due.year}-{actual_due.month:02d}-01"
+        end_m = actual_due.month + 1 if actual_due.month < 12 else 1
+        end_y = actual_due.year if actual_due.month < 12 else actual_due.year + 1
+        month_end = f"{end_y}-{end_m:02d}-01"
+
+        existing = (
+            supabase.table("transactions").select("id")
+            .eq("description", item["description"])
+            .gte("due_date", month_start).lt("due_date", month_end)
+            .execute()
+        ).data
+
+        if not existing:
+            txn = {
+                "description": item["description"],
+                "amount": item["amount"],
+                "type": item["type"],
+                "category": item["category"],
+                "status": "pending",
+                "due_date": str(actual_due),
+                "notes": f"Gerado automaticamente (recorrente: {item.get('frequency', 'monthly')})",
+            }
+            supabase.table("transactions").insert(txn).execute()
+            created += 1
+
+        # Track months with income for tithe calculation
+        if item["type"] == "income":
+            months_with_income.add((actual_due.year, actual_due.month))
+
+        # Advance to next period
+        current = _compute_next_due(current, item.get("frequency", "monthly"), item)
+
+    # Sync tithe for months where income was added
+    for y, m in months_with_income:
+        sync_tithe_and_firstfruits(m, y)
+
+    return created
 
 
 @router.put("/{item_id}")

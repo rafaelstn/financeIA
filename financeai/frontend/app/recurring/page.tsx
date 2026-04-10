@@ -85,6 +85,7 @@ const defaultForm = {
   next_due_date: "",
   use_business_day: false,
   business_day_number: "",
+  total_months: "12",
   notes: "",
 };
 
@@ -125,6 +126,7 @@ export default function RecurringPage() {
       data.next_due_date = form.next_due_date;
     }
     if (form.day_of_month) data.day_of_month = parseInt(form.day_of_month);
+    if (form.total_months) data.total_months = parseInt(form.total_months);
     if (form.notes) data.notes = form.notes;
 
     try {
@@ -377,6 +379,20 @@ export default function RecurringPage() {
                     </div>
                   </div>
                 )}
+                <div>
+                  <Label>Duração (meses)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="120"
+                    placeholder="12 = 1 ano"
+                    value={form.total_months}
+                    onChange={(e) =>
+                      setForm({ ...form, total_months: e.target.value })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Quantos meses essa conta vai durar. Padrão: 12 (1 ano)</p>
+                </div>
                 <div>
                   <Label>Observações</Label>
                   <Input

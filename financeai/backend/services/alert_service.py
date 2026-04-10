@@ -206,6 +206,29 @@ def get_active_alerts() -> list[dict]:
     except Exception:
         logger.exception("Failed to fetch budgets for alerts")
 
+    # Recurring about to expire (last month of total_months)
+    try:
+        recurring = (
+            supabase.table("recurring_transactions")
+            .select("id, description, total_months, months_generated, is_active")
+            .eq("is_active", True)
+            .execute()
+        ).data
+        for r in recurring:
+            total = r.get("total_months") or 12
+            generated = r.get("months_generated") or 0
+            if generated > 0 and generated >= total - 1:
+                alerts.append({
+                    "id": r["id"],
+                    "message": f"Recorrente expirando: {r['description']} - ultimo mes de {total} meses. Renovar?",
+                    "level": "warning",
+                    "due_date": None,
+                    "amount": None,
+                    "source": "recurring_expiry",
+                })
+    except Exception:
+        logger.exception("Failed to check recurring expiry")
+
     # Sort: danger first, then warning, then info, then by due_date
     level_order = {"danger": 0, "warning": 1, "info": 2}
     alerts.sort(key=lambda a: (level_order.get(a["level"], 3), a.get("due_date") or "9999-12-31"))

@@ -14,6 +14,7 @@ class RecurringCreate(BaseModel):
     next_due_date: Optional[date] = None
     use_business_day: bool = False
     business_day_number: Optional[int] = None  # e.g., 5 = 5th business day
+    total_months: int = 12  # duration in months, default 1 year
     notes: Optional[str] = None
 
     @field_validator('amount')
@@ -42,6 +43,7 @@ class RecurringUpdate(BaseModel):
     next_due_date: Optional[date] = None
     use_business_day: Optional[bool] = None
     business_day_number: Optional[int] = None
+    total_months: Optional[int] = None
     notes: Optional[str] = None
 
 
