@@ -6,6 +6,14 @@ const api = axios.create({
   timeout: 30000,
 });
 
+// Ensure trailing slash to avoid FastAPI 307 redirects on POST
+api.interceptors.request.use((config) => {
+  if (config.url && !config.url.includes("?") && !config.url.endsWith("/")) {
+    config.url += "/";
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
