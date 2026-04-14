@@ -1,4 +1,4 @@
-"""Planejamento DEFINITIVO v3 — Sem 13o, Congresso R$ 10k com viagem, sem viagem passeio"""
+"""Planejamento DEFINITIVO v5 — CNH 3x em Maio, equilibrado"""
 from database import supabase
 
 def upsert(m, y, title, obs, sections):
@@ -24,201 +24,195 @@ cv = [
     {"description": "DAS MEI Mensal", "amount": 86.0, "notes": ""},
     {"description": "Agua", "amount": 80.0, "notes": ""},
     {"description": "Celular Rafael", "amount": 75.0, "notes": ""},
-    {"description": "Crefito Paula", "amount": 72.0, "notes": "Parcela mensal"},
+    {"description": "Crefito Paula", "amount": 72.0, "notes": ""},
     {"description": "PlayStation", "amount": 65.0, "notes": ""},
     {"description": "Celular Paula", "amount": 62.0, "notes": ""},
 ]
-cv_total = 7408.0
+T = 7408.0
 
-# MAIO
-upsert(5, 2026, "Maio — Limpeza Total",
-    "O mes mais pesado. Cartao R$ 5k + atrasados + 8 dividas menores (suas + Paula). "
-    "TODAS as dividas pequenas da Paula morrem aqui. "
-    "Maio vai ser apertado (R$ 22 de sobra) mas limpa o caminho inteiro. "
-    "A partir de Junho voce respira e comeca a construir.",
+# MAIO — Urgentes + CNH 1/3
+upsert(5, 2026, "Maio — Limpeza + CNH",
+    "Mes de limpeza: cartao, atrasados e IR. Mais a primeira parcela da CNH. "
+    "As dividas pequenas da Paula ficam pra Junho/Agosto — assim Maio nao aperta demais. "
+    "Sobra R$ 662 pra imprevistos. Apertado mas possivel.",
     [
-        {"category": "custo_vida", "title": "Custo de Vida", "total": cv_total, "items": cv},
-        {"category": "dividas", "title": "Dividas — Limpeza Total", "total": 10369.0, "items": [
-            {"description": "Fatura Cartao Rogerio", "amount": 5000.0, "notes": "PRIORIDADE. Rotativo e 15%/mes!"},
+        {"category": "custo_vida", "title": "Custo de Vida", "total": T, "items": cv},
+        {"category": "dividas", "title": "Dividas — Urgentes + CNH 1/3", "total": 8029.0, "items": [
+            {"description": "Fatura Cartao Rogerio", "amount": 5000.0, "notes": "PRIORIDADE. Rotativo = 15%/mes!"},
             {"description": "Faculdade Abril atrasada", "amount": 1507.0, "notes": "Com multa"},
-            {"description": "Nubank Emp Paula — QUITAR", "amount": 663.0, "notes": "Negocie!"},
             {"description": "IR Paula + Rafael", "amount": 588.0, "notes": "Vence 29/05"},
-            {"description": "Marisa Recovery Paula — QUITAR", "amount": 460.0, "notes": "Negocie!"},
-            {"description": "Crefito Paula — QUITAR", "amount": 380.0, "notes": "Negocie!"},
-            {"description": "Mercado Pago — QUITAR", "amount": 334.0, "notes": ""},
             {"description": "DAS atrasados Jan-Mar", "amount": 300.0, "notes": "3x R$ 100"},
             {"description": "Parcelamento DAS Jan-Mar", "amount": 300.0, "notes": "3x R$ 100"},
-            {"description": "Nubank Cartao Paula — QUITAR", "amount": 260.0, "notes": ""},
-            {"description": "Recovery — QUITAR", "amount": 253.0, "notes": ""},
-            {"description": "Estacio Paula — QUITAR", "amount": 92.0, "notes": ""},
+            {"description": "CNH — Parcela 1/3", "amount": 334.0, "notes": "Auto-escola. Parcela 1 de 3."},
+        ]},
+        {"category": "reserva", "title": "Reserva", "total": 500.0, "items": [
+            {"description": "CDB liquidez diaria", "amount": 500.0, "notes": "Acum: R$ 500"},
+        ]},
+        {"category": "sobra", "title": "Sobra", "total": 1254.0, "items": [
+            {"description": "Gastos pessoais", "amount": 1254.0, "notes": "Apertado mas respira em Junho."},
+        ]},
+    ])
+
+# JUNHO — Bola de neve + 4 menores Paula + CNH 2/3
+upsert(6, 2026, "Junho — Comeca a Construir",
+    "Estacio e Vivo caem. 4 dividas menores da Paula caem tambem (Claro, Estacio, Nubank Cartao). "
+    "Comeca Carro, Congresso e Tratamento. A maquina ligou.",
+    [
+        {"category": "custo_vida", "title": "Custo de Vida", "total": T, "items": cv},
+        {"category": "dividas", "title": "Dividas — 6 quitadas!", "total": 2351.0, "items": [
+            {"description": "Vivo — QUITAR", "amount": 809.0, "notes": "Negocie!"},
+            {"description": "Estacio Rafael — QUITAR", "amount": 708.0, "notes": "Negocie!"},
+            {"description": "CNH — Parcela 2/3", "amount": 334.0, "notes": ""},
+            {"description": "Mercado Pago — QUITAR", "amount": 334.0, "notes": ""},
             {"description": "Claro 80 Paula — QUITAR", "amount": 80.0, "notes": ""},
             {"description": "Claro 68 Paula — QUITAR", "amount": 68.0, "notes": ""},
-        ]},
-        {"category": "reserva", "title": "Reserva", "total": 300.0, "items": [
-            {"description": "CDB liquidez diaria", "amount": 300.0, "notes": "Mes apertado. O que da."},
-        ]},
-        {"category": "sobra", "title": "Sobra", "total": 22.0, "items": [
-            {"description": "Imprevistos", "amount": 22.0, "notes": "Aperta em Maio, explode em Junho. Aguenta."},
-        ]},
-    ])
-
-# JUNHO
-upsert(6, 2026, "Junho — Comeca a Construir",
-    "Paula livre! Agora ataca Estacio e Vivo do Rafael. "
-    "E comeca 3 fundos simultaneos: Carro, Congresso e Tratamento. "
-    "O carro precisa de R$ 25k ate Dezembro. O congresso precisa de R$ 10k ate Novembro. "
-    "Voce tem capacidade. Tudo cabe se manter o foco.",
-    [
-        {"category": "custo_vida", "title": "Custo de Vida", "total": cv_total, "items": cv},
-        {"category": "dividas", "title": "Dividas — Bola de Neve", "total": 1517.0, "items": [
-            {"description": "Estacio Rafael — QUITAR", "amount": 708.0, "notes": "Negocie no Serasa!"},
-            {"description": "Vivo — QUITAR", "amount": 809.0, "notes": "Negocie!"},
+            {"description": "Estacio Paula — QUITAR", "amount": 92.0, "notes": ""},
+            {"description": "Nubank Cartao Paula — QUITAR", "amount": 260.0, "notes": ""},
         ]},
         {"category": "reserva", "title": "Reserva", "total": 1000.0, "items": [
-            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acumulado: R$ 1.300"},
+            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acum: R$ 1.500"},
         ]},
-        {"category": "sobra", "title": "Objetivos + Pessoal", "total": 7774.0, "items": [
-            {"description": "Fundo Carro", "amount": 3807.0, "notes": "INICIO! Acumulado: R$ 3.807. Meta: R$ 25k Dez."},
-            {"description": "Fundo Congresso + Viagem", "amount": 1667.0, "notes": "Inicio! Acumulado: R$ 1.667. Meta: R$ 10k Nov."},
-            {"description": "Tratamento Paula", "amount": 700.0, "notes": "Inicio! Acumulado: R$ 700."},
+        {"category": "sobra", "title": "Objetivos + Pessoal", "total": 6640.0, "items": [
+            {"description": "Fundo Carro", "amount": 2973.0, "notes": "Inicio! Acum: R$ 2.973"},
+            {"description": "Congresso + Viagem", "amount": 1667.0, "notes": "Acum: R$ 1.667"},
             {"description": "Gastos pessoais", "amount": 2000.0, "notes": ""},
         ]},
     ])
 
-# JULHO
-upsert(7, 2026, "Julho — CNH + Mais Duas",
-    "CNH paga — precisa pra dirigir o carro! Ipanema e Nubank caem. "
-    "Ja sao 12+ dividas eliminadas. O Serasa esta ficando limpo. "
-    "Congresso em R$ 3.334. Carro em R$ 6.328. Tratamento em R$ 1.400.",
+# JULHO — Ipanema + Nubank + CNH 3/3 + Aniversario Paula
+upsert(7, 2026, "Julho — Aniversario Paula + CNH Pronta",
+    "CNH finalizada! Ipanema e Nubank caem. Presente da Paula — voces estao juntos nessa. "
+    "Comeca o Tratamento dela este mes.",
     [
-        {"category": "custo_vida", "title": "Custo de Vida", "total": cv_total, "items": cv},
-        {"category": "dividas", "title": "Dividas + CNH", "total": 2803.0, "items": [
-            {"description": "CNH — Carteira de Motorista", "amount": 1000.0, "notes": "Precisa pra dirigir o carro!"},
-            {"description": "Nubank Rafael — QUITAR", "amount": 945.0, "notes": "Use o app."},
+        {"category": "custo_vida", "title": "Custo de Vida", "total": T, "items": cv},
+        {"category": "dividas", "title": "Dividas + CNH Final", "total": 2137.0, "items": [
+            {"description": "Nubank Rafael — QUITAR", "amount": 945.0, "notes": ""},
             {"description": "Ipanema (858) — QUITAR", "amount": 858.0, "notes": "Negocie!"},
+            {"description": "CNH — Parcela 3/3", "amount": 334.0, "notes": "ULTIMA! CNH completa."},
         ]},
         {"category": "reserva", "title": "Reserva", "total": 1000.0, "items": [
-            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acumulado: R$ 2.300"},
+            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acum: R$ 2.500"},
         ]},
-        {"category": "sobra", "title": "Objetivos + Pessoal", "total": 6888.0, "items": [
-            {"description": "Fundo Carro", "amount": 2521.0, "notes": "Acumulado: R$ 6.328"},
-            {"description": "Fundo Congresso + Viagem", "amount": 1667.0, "notes": "Acumulado: R$ 3.334"},
-            {"description": "Tratamento Paula", "amount": 700.0, "notes": "Acumulado: R$ 1.400"},
+        {"category": "sobra", "title": "Objetivos + Aniversario", "total": 7554.0, "items": [
+            {"description": "Fundo Carro", "amount": 2687.0, "notes": "Acum: R$ 5.660"},
+            {"description": "Congresso + Viagem", "amount": 1667.0, "notes": "Acum: R$ 3.334"},
+            {"description": "Tratamento Paula", "amount": 700.0, "notes": "Inicio! Acum: R$ 700"},
+            {"description": "Aniversario Paula", "amount": 500.0, "notes": "Presente + jantar ou passeio especial"},
             {"description": "Gastos pessoais", "amount": 2000.0, "notes": ""},
         ]},
     ])
 
-# AGOSTO
-upsert(8, 2026, "Agosto — As Duas Grandes",
-    "SportAcao R$ 2k e Bradesco Paula R$ 1.710 caem no mesmo mes. "
-    "Depois desse mes: so sobra UMA divida (Ipanema grande). "
-    "Negocie os dois — SportAcao pode baixar pra R$ 1.200, Bradesco pra R$ 1.000.",
+# AGOSTO — Bradesco + 5 dividas Paula restantes
+upsert(8, 2026, "Agosto — Paula Livre!",
+    "Bradesco + 5 dividas da Paula caem de vez. Depois desse mes, Paula ZERO no Serasa! "
+    "So sobra a Ipanema grande do Rafael. Quase la.",
     [
-        {"category": "custo_vida", "title": "Custo de Vida", "total": cv_total, "items": cv},
-        {"category": "dividas", "title": "Dividas — As Grandes", "total": 3710.0, "items": [
-            {"description": "SportAcao — QUITAR", "amount": 2000.0, "notes": "Negocie! Pode cair pra R$ 1.200."},
-            {"description": "Bradesco Paula — QUITAR", "amount": 1710.0, "notes": "Maior da Paula. Negocie forte!"},
+        {"category": "custo_vida", "title": "Custo de Vida", "total": T, "items": cv},
+        {"category": "dividas", "title": "Dividas — Paula Livre!", "total": 3800.0, "items": [
+            {"description": "Bradesco Paula — QUITAR", "amount": 1710.0, "notes": "A maior. Negocie!"},
+            {"description": "Nubank Emp Paula — QUITAR", "amount": 663.0, "notes": "Negocie!"},
+            {"description": "Marisa Recovery Paula — QUITAR", "amount": 460.0, "notes": ""},
+            {"description": "Crefito Paula — QUITAR", "amount": 380.0, "notes": ""},
+            {"description": "Recovery Rafael — QUITAR", "amount": 253.0, "notes": ""},
+            {"description": "Recovery — QUITAR", "amount": 334.0, "notes": ""},
         ]},
         {"category": "reserva", "title": "Reserva", "total": 1000.0, "items": [
-            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acumulado: R$ 3.300"},
+            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acum: R$ 3.500"},
         ]},
-        {"category": "sobra", "title": "Objetivos + Pessoal", "total": 5981.0, "items": [
-            {"description": "Fundo Carro", "amount": 1614.0, "notes": "Acumulado: R$ 7.942. Mes pesado com 2 dividas grandes."},
-            {"description": "Fundo Congresso + Viagem", "amount": 1667.0, "notes": "Acumulado: R$ 5.001. Metade!"},
-            {"description": "Tratamento Paula", "amount": 700.0, "notes": "Acumulado: R$ 2.100"},
-            {"description": "Gastos pessoais", "amount": 2000.0, "notes": ""},
+        {"category": "sobra", "title": "Objetivos + Pessoal", "total": 5891.0, "items": [
+            {"description": "Fundo Carro", "amount": 2024.0, "notes": "Acum: R$ 7.684"},
+            {"description": "Congresso + Viagem", "amount": 1667.0, "notes": "Acum: R$ 5.001. Metade!"},
+            {"description": "Tratamento Paula", "amount": 700.0, "notes": "Acum: R$ 1.400"},
+            {"description": "Gastos pessoais", "amount": 1500.0, "notes": ""},
         ]},
     ])
 
-# SETEMBRO
-upsert(9, 2026, "Setembro — O Chefao",
-    "Ultima divida: Ipanema R$ 5.645. NEGOCIE! Desconto de 50-80% e possivel em divida antiga. "
-    "Tente pagar R$ 2.000-3.000. Cada real economizado aqui vai pro carro. "
-    "Tratamento Paula quase completo. Congresso passando de R$ 6.600.",
+# SETEMBRO — Chefao + TV comeca
+upsert(9, 2026, "Setembro — O Chefao + TV",
+    "Ultima divida grande: Ipanema R$ 5.645. NEGOCIE forte. TV OLED comeca a ser juntada. "
+    "Presente de aniversario em Dezembro ta sendo construido.",
     [
-        {"category": "custo_vida", "title": "Custo de Vida", "total": cv_total, "items": cv},
+        {"category": "custo_vida", "title": "Custo de Vida", "total": T, "items": cv},
         {"category": "dividas", "title": "Dividas — Chefao", "total": 3000.0, "items": [
-            {"description": "Ipanema grande — NEGOCIAR", "amount": 3000.0, "notes": "Original R$ 5.645. NEGOCIE! Tente R$ 2k-3k."},
+            {"description": "Ipanema grande — NEGOCIAR", "amount": 3000.0, "notes": "Original R$ 5.645. Tente R$ 2k-3k!"},
         ]},
         {"category": "reserva", "title": "Reserva", "total": 1000.0, "items": [
-            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acumulado: R$ 4.300"},
+            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acum: R$ 4.500"},
         ]},
         {"category": "sobra", "title": "Objetivos + Pessoal", "total": 6691.0, "items": [
-            {"description": "Fundo Carro", "amount": 2324.0, "notes": "Acumulado: R$ 10.266"},
-            {"description": "Fundo Congresso + Viagem", "amount": 1667.0, "notes": "Acumulado: R$ 6.668"},
-            {"description": "Tratamento Paula", "amount": 700.0, "notes": "Acumulado: R$ 2.800"},
-            {"description": "Gastos pessoais", "amount": 2000.0, "notes": ""},
+            {"description": "Fundo Carro", "amount": 1624.0, "notes": "Acum: R$ 9.308"},
+            {"description": "Congresso + Viagem", "amount": 1667.0, "notes": "Acum: R$ 6.668"},
+            {"description": "TV OLED Samsung", "amount": 1200.0, "notes": "Inicio! Acum: R$ 1.200"},
+            {"description": "Tratamento Paula", "amount": 700.0, "notes": "Acum: R$ 2.100"},
+            {"description": "Gastos pessoais", "amount": 1500.0, "notes": ""},
         ]},
     ])
 
-# OUTUBRO
+# OUTUBRO — Ipanema resto + Tratamento completo
 upsert(10, 2026, "Outubro — Livre de Dividas!",
-    "Ipanema resto quitada. TODAS AS DIVIDAS ZERADAS (suas + Paula)! "
-    "Tratamento Paula completo em R$ 3.500. "
-    "Carro em R$ 12.945. Congresso em R$ 8.335. Tudo acelerando!",
+    "TODAS AS DIVIDAS ZERADAS! Tratamento Paula completo. "
+    "TV em R$ 3.400. Carro em R$ 11k. Congresso em R$ 8.335.",
     [
-        {"category": "custo_vida", "title": "Custo de Vida", "total": cv_total, "items": cv},
+        {"category": "custo_vida", "title": "Custo de Vida", "total": T, "items": cv},
         {"category": "dividas", "title": "Dividas — FINAL", "total": 2645.0, "items": [
-            {"description": "Ipanema grande — QUITAR RESTO", "amount": 2645.0, "notes": "Se negociou em Set, pode ser zero!"},
+            {"description": "Ipanema grande — RESTO", "amount": 2645.0, "notes": "Se negociou em Set, pode ser zero!"},
         ]},
         {"category": "reserva", "title": "Reserva", "total": 1000.0, "items": [
-            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acumulado: R$ 5.300"},
+            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acum: R$ 5.500"},
         ]},
         {"category": "sobra", "title": "Objetivos + Pessoal", "total": 7046.0, "items": [
-            {"description": "Fundo Carro", "amount": 2679.0, "notes": "Acumulado: R$ 12.945"},
-            {"description": "Fundo Congresso + Viagem", "amount": 1667.0, "notes": "Acumulado: R$ 8.335"},
-            {"description": "Tratamento Paula — COMPLETAR", "amount": 700.0, "notes": "Acumulado: R$ 3.500. META BATIDA!"},
-            {"description": "Gastos pessoais", "amount": 2000.0, "notes": ""},
+            {"description": "Fundo Carro", "amount": 1979.0, "notes": "Acum: R$ 11.287"},
+            {"description": "Congresso + Viagem", "amount": 1667.0, "notes": "Acum: R$ 8.335"},
+            {"description": "TV OLED Samsung", "amount": 1200.0, "notes": "Acum: R$ 2.400"},
+            {"description": "Tratamento Paula — COMPLETO", "amount": 700.0, "notes": "Acum: R$ 2.800. Quase! Completa em breve."},
+            {"description": "Gastos pessoais", "amount": 1500.0, "notes": ""},
         ]},
     ])
 
-# NOVEMBRO
+# NOVEMBRO — Congresso pago!
 upsert(11, 2026, "Novembro — Congresso Pago!",
-    "Congresso Espada na Fase PAGO! R$ 10k antes do deadline dia 20. "
-    "Sem dividas. Tratamento feito. Carro quase la — R$ 18.969. "
-    "Dezembro e so carro + TV. Voce venceu a batalha mais dificil.",
+    "Congresso + Viagem PAGO! R$ 10k antes do deadline 20/Nov. "
+    "TV em R$ 4.900. Carro em R$ 16.811. Dezembro fecha tudo.",
     [
-        {"category": "custo_vida", "title": "Custo de Vida", "total": cv_total, "items": cv},
+        {"category": "custo_vida", "title": "Custo de Vida", "total": T, "items": cv},
         {"category": "reserva", "title": "Reserva", "total": 1000.0, "items": [
-            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acumulado: R$ 6.300"},
+            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acum: R$ 6.500"},
         ]},
         {"category": "sobra", "title": "Objetivos + Pessoal", "total": 9691.0, "items": [
-            {"description": "Fundo Carro", "amount": 6024.0, "notes": "Acumulado: R$ 18.969. Sem dividas = carro acelera!"},
-            {"description": "Congresso + Viagem — PAGAR", "amount": 1667.0, "notes": "Acumulado: R$ 10.002. META BATIDA! Deadline 20/Nov."},
-            {"description": "Gastos pessoais", "amount": 2000.0, "notes": ""},
+            {"description": "Fundo Carro", "amount": 5024.0, "notes": "Acum: R$ 16.311. Sem dividas = carro voa!"},
+            {"description": "Congresso + Viagem — PAGAR", "amount": 1667.0, "notes": "Acum: R$ 10.002. META BATIDA!"},
+            {"description": "TV OLED Samsung", "amount": 1500.0, "notes": "Acum: R$ 3.900"},
+            {"description": "Tratamento Paula", "amount": 700.0, "notes": "Acum: R$ 3.500. COMPLETO!"},
+            {"description": "Gastos pessoais", "amount": 800.0, "notes": "Reduzido pra fechar TV em Dez"},
         ]},
     ])
 
-# DEZEMBRO
-upsert(12, 2026, "Dezembro — O Carro Chega!",
-    "R$ 26.660 no fundo do carro. COMPRA! "
-    "E ainda comeca o fundo da TV OLED. "
-    "Olha a jornada: R$ 16.842 em dividas -> R$ 0. Sem carro -> com carro. "
-    "Sem reserva -> R$ 7.300. Congresso pago. Tratamento feito. CNH tirada. "
-    "Isso nao e sorte — e disciplina. 2027 comeca no volante.",
+# DEZEMBRO — Carro + TV! Aniversario!
+upsert(12, 2026, "Dezembro — Carro + TV! Feliz Aniversario!",
+    "SEU MES! Carro bate R$ 25k. TV OLED bate R$ 6k. Dois presentes de aniversario! "
+    "A jornada: R$ 16.842 em dividas -> R$ 0. Sem nada -> carro + TV + reserva + CNH + congresso + tratamento. "
+    "Em 8 meses voce transformou tudo. Parabens, Rafael.",
     [
-        {"category": "custo_vida", "title": "Custo de Vida", "total": cv_total, "items": cv},
-        {"category": "reserva", "title": "Reserva", "total": 1000.0, "items": [
-            {"description": "CDB liquidez diaria", "amount": 1000.0, "notes": "Acumulado: R$ 7.300"},
+        {"category": "custo_vida", "title": "Custo de Vida", "total": T, "items": cv},
+        {"category": "reserva", "title": "Reserva", "total": 500.0, "items": [
+            {"description": "CDB liquidez diaria", "amount": 500.0, "notes": "Acum: R$ 7.000. Reduzida pra fechar TV."},
         ]},
-        {"category": "sobra", "title": "Carro + TV + Pessoal", "total": 9691.0, "items": [
-            {"description": "Carro — COMPRAR!", "amount": 5691.0, "notes": "Acumulado: R$ 24.660+. Pesquise, negocie, leve mecanico. E SEU!"},
-            {"description": "TV OLED Samsung", "amount": 2000.0, "notes": "Comeca! Continua em 2027 ou Black Friday."},
-            {"description": "Gastos pessoais + festas", "amount": 2000.0, "notes": "Final de ano. Voce conquistou. Curta."},
+        {"category": "sobra", "title": "Carro + TV + Aniversario!", "total": 10191.0, "items": [
+            {"description": "Carro — COMPRAR!", "amount": 5591.0, "notes": "Acum: R$ 21.902. Pesquise, negocie, leve mecanico!"},
+            {"description": "TV OLED Samsung — COMPRAR!", "amount": 2100.0, "notes": "Acum: R$ 6.000. META BATIDA! Presente de aniversario!"},
+            {"description": "Gastos pessoais + aniversario", "amount": 2500.0, "notes": "Seu mes. Comemore TUDO."},
         ]},
     ])
 
 print()
 print("=" * 60)
-print("JORNADA 2026 — SEM 13o — VERSAO FINAL")
+print("VERSAO FINAL v5 — EQUILIBRADA")
 print("=" * 60)
-print()
-print("CARRO: Jun R$3.8k > Jul R$6.3k > Ago R$7.9k > Set R$10.3k > Out R$12.9k > Nov R$19k > Dez R$26.6k = COMPRA!")
-print("CONGRESSO+VIAGEM: R$1.667/mes Jun-Nov = R$ 10k = PAGO!")
-print("TRATAMENTO: R$700/mes Jun-Out = R$ 3.500 = COMPLETO!")
-print("CNH: Julho = PAGA!")
-print("TV OLED: Comeca em Dezembro")
-print("RESERVA: R$ 7.300")
-print()
-print("DE: R$ 16.842 dividas, R$ 0 tudo")
-print("PARA: R$ 0 divida, carro, CNH, congresso, tratamento, R$ 7.300 reserva")
+print("Mai: R$ 1.254 livre (era R$ 22)")
+print("Jun-Dez: R$ 1.500-2.500 livre")
+print("CNH: 3x Mai/Jun/Jul")
+print("Carro: R$ 25.000 Dez")
+print("TV OLED: R$ 6.000 Dez (aniversario!)")
+print("Congresso: R$ 10.000 Nov")
+print("Tratamento: R$ 3.500 Nov")
+print("Reserva: R$ 7.000")

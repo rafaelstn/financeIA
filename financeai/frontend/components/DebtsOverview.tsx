@@ -65,7 +65,7 @@ export default function DebtsOverview() {
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-red-500" />
-          Visao Geral de Dividas
+          Visão Geral de Dívidas
         </CardTitle>
         <Link href="/debts" className="text-sm text-blue-500 hover:underline">
           Ver todas
@@ -75,7 +75,7 @@ export default function DebtsOverview() {
         <div className="grid grid-cols-3 gap-4 mb-4">
           <div className="text-center p-3 rounded-lg border">
             <p className="text-2xl font-bold text-red-500">{activeDebts.length}</p>
-            <p className="text-xs text-muted-foreground">Dividas Ativas</p>
+            <p className="text-xs text-muted-foreground">Dívidas Ativas</p>
           </div>
           <div className="text-center p-3 rounded-lg border">
             <p className="text-lg font-bold text-red-500">
